@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masterlist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fde8ee;
+      --surface: #fff5f8;
+      --surface2: #fad5e0;
+      --border: #f5b8cb;
+      --border2: #eda3bb;
+      --text: #3a1a24;
+      --text2: #7a4a5a;
+      --text3: #b07a8a;
+      --accent: #c0395a;
+      --accent-pasabuy: #7c3aed;
+      --radius: 10px;
+      --radius-lg: 14px;
+      --font: 'DM Sans', sans-serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .page { max-width: 1300px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; gap: 16px; flex-wrap: wrap; }
+    .header-left h1 { font-size: 22px; font-weight: 600; letter-spacing: -.3px; }
+    .header-left p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+    .add-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      border: none; border-radius: var(--radius); padding: 9px 18px;
+      font-size: 13px; font-weight: 500; font-family: var(--font);
+      cursor: pointer; transition: opacity .15s;
+      white-space: nowrap;
+    }
+    .add-btn:hover { opacity: .82; }
+    .add-btn svg { flex-shrink: 0; }
+    .add-btn.orders { background: var(--accent); color: #fff; }
+    .add-btn.pasabuy { background: var(--accent-pasabuy); color: #fff; }
+
+    .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+    .tab-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; font-size: 13px; font-weight: 500;
+      font-family: var(--font); border: none; background: none;
+      color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; border-radius: var(--radius) var(--radius) 0 0;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--surface2); }
+    .tab-btn.active-orders { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn.active-pasabuy { color: var(--accent-pasabuy); border-bottom-color: var(--accent-pasabuy); }
+    .tab-badge {
+      font-size: 10px; font-weight: 600; padding: 1px 6px;
+      border-radius: 20px; background: var(--surface2); color: var(--text2);
+    }
+    .tab-btn.active-orders .tab-badge { background: #1a1917; color: #fff; }
+    .tab-btn.active-pasabuy .tab-badge { background: var(--accent-pasabuy); color: #fff; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .stats { display: grid; gap: 10px; margin-bottom: 1.5rem; }
+    .stats.orders-stats { grid-template-columns: repeat(4, 1fr); }
+    .stats.pasabuy-stats { grid-template-columns: repeat(5, 1fr); }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+    .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .stat-value { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
+    .stat-value.small { font-size: 15px; }
+
+    .toolbar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+    .search-wrap { position: relative; flex: 1; min-width: 180px; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+    .search-input {
+      width: 100%; padding: 8px 10px 8px 34px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); font-family: var(--font); font-size: 13px;
+      color: var(--text); outline: none; transition: border-color .15s;
+    }
+    .search-input:focus { border-color: var(--border2); }
+    .filter-select {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); font-family: var(--font); font-size: 13px;
+      color: var(--text); outline: none; cursor: pointer; min-width: 140px;
+    }
+    .filter-select:focus { border-color: var(--border2); }
+
+    .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--surface2); }
+    th {
+      padding: 10px 14px; text-align: left;
+      font-size: 11px; font-weight: 500; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap; cursor: pointer; user-select: none;
+    }
+    th:hover { color: var(--text); }
+    th .sort-icon { opacity: .4; margin-left: 3px; vertical-align: middle; }
+    th.sorted .sort-icon { opacity: 1; }
+    td {
+      padding: 11px 14px; border-bottom: 1px solid var(--border);
+      color: var(--text); vertical-align: middle;
+      white-space: nowrap; max-width: 160px;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fce8f0; }
+    .td-buyer { font-weight: 500; }
+    .td-item { color: var(--text2); }
+    .td-mono { font-family: var(--mono); font-size: 12px; }
+    .td-muted { color: var(--text2); font-size: 12px; }
+    .td-notes { color: var(--text3); font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 500;
+      padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+    }
+    .badge-RESERVED   { background: #dbeafe; color: #1e40af; }
+    .badge-SHIPMENT   { background: #ede9fe; color: #5b21b6; }
+    .badge-DELIVERED  { background: #dcfce7; color: #166534; }
+    .badge-CANCELLED  { background: #fee2e2; color: #991b1b; }
+    .badge-PENDING    { background: #f3f4f6; color: #374151; }
+    .badge-PAID       { background: #d1fae5; color: #065f46; }
+    .badge-UNPAID     { background: #fef9c3; color: #854d0e; }
+    .badge-PROCESSING { background: #ffedd5; color: #9a3412; }
+    .badge-ARRIVED    { background: #cffafe; color: #155e75; }
+
+    .row-actions { display: flex; gap: 4px; }
+    .row-btn {
+      border: none; background: none; cursor: pointer;
+      color: var(--text3); padding: 5px; border-radius: 6px;
+      display: inline-flex; align-items: center; transition: background .12s, color .12s;
+    }
+    .row-btn:hover { background: var(--surface2); color: var(--text); }
+    .row-btn.danger:hover { background: #fee2e2; color: #991b1b; }
+
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text3); }
+    .empty-state svg { margin: 0 auto 12px; display: block; opacity: .35; }
+    .empty-state p { font-size: 13px; }
+    .empty-state strong { color: var(--text2); }
+
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.35); z-index: 100;
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: var(--radius-lg);
+      border: 1px solid var(--border); padding: 1.75rem;
+      width: 100%; max-width: 560px;
+      max-height: 90vh; overflow-y: auto;
+      animation: fadeUp .2s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .modal-header h2 { font-size: 16px; font-weight: 600; }
+    .modal-header .modal-tag {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .08em; padding: 2px 8px; border-radius: 20px;
+      margin-left: 8px;
+    }
+    .modal-tag.orders { background: #1a1917; color: #fff; }
+    .modal-tag.pasabuy { background: var(--accent-pasabuy); color: #fff; }
+    .close-btn {
+      border: none; background: none; cursor: pointer; color: var(--text2);
+      padding: 5px; border-radius: 6px; display: flex; align-items: center;
+    }
+    .close-btn:hover { background: var(--surface2); color: var(--text); }
+
+    .form-section { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); margin: 1.25rem 0 .75rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+    .form-section:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-row.single { grid-template-columns: 1fr; }
+    .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); font-family: var(--font); font-size: 13px;
+      color: var(--text); outline: none; transition: border-color .15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--border2); }
+    .form-group textarea { resize: vertical; min-height: 68px; }
+    .form-group input.error,
+    .form-group select.error { border-color: #f87171; }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+    .btn-cancel {
+      padding: 8px 16px; border-radius: var(--radius); border: 1px solid var(--border);
+      background: transparent; font-family: var(--font); font-size: 13px;
+      color: var(--text2); cursor: pointer; transition: background .12s;
+    }
+    .btn-cancel:hover { background: var(--surface2); }
+    .btn-save {
+      padding: 8px 20px; border-radius: var(--radius); border: none;
+      font-family: var(--font); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: opacity .15s; color: #fff;
+    }
+    .btn-save:hover { opacity: .82; }
+    .btn-save.orders { background: var(--accent); }
+    .btn-save.pasabuy { background: var(--accent-pasabuy); }
+
+    @media (max-width: 700px) {
+      .stats.orders-stats,
+      .stats.pasabuy-stats { grid-template-columns: 1fr 1fr; }
+      .form-row,
+      .form-row.triple { grid-template-columns: 1fr; }
+      .header { flex-direction: column; align-items: stretch; }
+      .add-btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Masterlist</h1>
+      <p id="entry-count">0 entries total</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="add-btn orders" id="add-btn-orders" onclick="openOrdersForm()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Order
+      </button>
+      <button class="add-btn pasabuy" id="add-btn-pasabuy" onclick="openPasabuyForm()" style="display:none;">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Pasabuy
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active-orders" id="tab-orders" onclick="switchTab('orders')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+      Orders
+      <span class="tab-badge" id="tab-badge-orders">0</span>
+    </button>
+    <button class="tab-btn" id="tab-pasabuy" onclick="switchTab('pasabuy')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg>
+      Pasabuy
+      <span class="tab-badge" id="tab-badge-pasabuy">0</span>
+    </button>
+  </div>
+
+  <!-- ORDERS PANEL -->
+  <div class="panel active" id="panel-orders">
+    <div class="stats orders-stats">
+      <div class="stat"><div class="stat-label">Total entries</div><div class="stat-value" id="o-total">0</div></div>
+      <div class="stat"><div class="stat-label">Total amount</div><div class="stat-value small" id="o-amount">₱0.00</div></div>
+      <div class="stat"><div class="stat-label">Reserved</div><div class="stat-value" id="o-reserved">0</div></div>
+      <div class="stat"><div class="stat-label">Delivered</div><div class="stat-value" id="o-delivered">0</div></div>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="oq" type="text" placeholder="Search buyer or item…">
+      </div>
+      <select class="filter-select" id="ofst">
+        <option value="">All statuses</option>
+        <option>RESERVED</option><option>SHIPMENT</option><option>DELIVERED</option>
+        <option>CANCELLED</option><option>PENDING</option>
+      </select>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th onclick="srtOrders('name')">Buyer <span class="sort-icon">↕</span></th>
+            <th onclick="srtOrders('item')">Item / Product <span class="sort-icon">↕</span></th>
+            <th onclick="srtOrders('price')">Price <span class="sort-icon">↕</span></th>
+            <th onclick="srtOrders('fee')">Ship fee <span class="sort-icon">↕</span></th>
+            <th onclick="srtOrders('date')">Deadline <span class="sort-icon">↕</span></th>
+            <th onclick="srtOrders('status')">Status <span class="sort-icon">↕</span></th>
+            <th>MOP</th><th>MOD</th><th>Notes</th><th></th>
+          </tr></thead>
+          <tbody id="o-tbd"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="o-emp">
+        <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+        <p>No orders yet — click <strong>Add Order</strong> to get started.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASABUY PANEL -->
+  <div class="panel" id="panel-pasabuy">
+    <div class="stats pasabuy-stats">
+      <div class="stat"><div class="stat-label">Total entries</div><div class="stat-value" id="p-total">0</div></div>
+      <div class="stat"><div class="stat-label">Total amount</div><div class="stat-value small" id="p-amount">₱0.00</div></div>
+      <div class="stat"><div class="stat-label">Pending</div><div class="stat-value" id="p-pending">0</div></div>
+      <div class="stat"><div class="stat-label">Arrived PH</div><div class="stat-value" id="p-arrived">0</div></div>
+      <div class="stat"><div class="stat-label">Delivered</div><div class="stat-value" id="p-delivered">0</div></div>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="pq" type="text" placeholder="Search buyer or item…">
+      </div>
+      <select class="filter-select" id="pfst">
+        <option value="">All statuses</option>
+        <option>PENDING</option><option>PROCESSING</option><option>SHIPMENT</option>
+        <option>ARRIVED</option><option>DELIVERED</option><option>CANCELLED</option>
+      </select>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th onclick="srtPasabuy('name')">Buyer <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('item')">Item / Product <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('price')">Price <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('isf')">ISF <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('addFee')">Add'l fee <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('serviceFee')">Service fee <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('localShip')">Local ship <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('deadline')">Pymnt deadline <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('status')">Status <span class="sort-icon">↕</span></th>
+            <th onclick="srtPasabuy('etaPH')">ETA PH <span class="sort-icon">↕</span></th>
+            <th>MOP</th><th>MOD</th><th>Notes</th><th></th>
+          </tr></thead>
+          <tbody id="p-tbd"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="p-emp">
+        <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg>
+        <p>No pasabuy entries yet — click <strong>Add Pasabuy</strong> to get started.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ORDERS MODAL -->
+<div class="modal-backdrop" id="o-modal-bg">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="o-modal-title">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;">
+        <h2 id="o-modal-title">New entry</h2>
+        <span class="modal-tag orders">Order</span>
+      </div>
+      <button class="close-btn" onclick="closeOrdersForm()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="form-section">Buyer & item</div>
+    <div class="form-row">
+      <div class="form-group"><label for="of-name">Buyer name *</label><input id="of-name" type="text" placeholder="e.g. Maria Santos"></div>
+      <div class="form-group"><label for="of-item">Item / product *</label><input id="of-item" type="text" placeholder="e.g. Korean skincare set"></div>
+    </div>
+    <div class="form-section">Pricing</div>
+    <div class="form-row">
+      <div class="form-group"><label for="of-price">Price (₱)</label><input id="of-price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label for="of-fee">Local shipping fee (₱)</label><input id="of-fee" type="number" min="0" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-section">Payment & delivery</div>
+    <div class="form-row">
+      <div class="form-group"><label for="of-mop">Mode of payment (MOP)</label>
+        <select id="of-mop">
+          <option value="">— select —</option>
+          <option>GCash</option><option>PayMaya</option><option>Bank transfer</option>
+          <option>Cash on delivery</option><option>Credit card</option><option>Debit card</option><option>Others</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="of-mod">Mode of delivery (MOD)</label>
+        <select id="of-mod">
+          <option value="">— select —</option>
+          <option>J&T Express</option><option>LBC</option><option>Shopee Express</option>
+          <option>Lazada Logistics</option><option>Ninja Van</option><option>Flash Express</option>
+          <option>Grab Express</option><option>Lalamove</option><option>Others</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-section">Schedule & status</div>
+    <div class="form-row">
+      <div class="form-group"><label for="of-date">Expected date / deadline</label><input id="of-date" type="date"></div>
+      <div class="form-group"><label for="of-status">Status</label>
+        <select id="of-status">
+          <option>RESERVED</option><option>SHIPMENT</option><option>DELIVERED</option>
+          <option>CANCELLED</option><option>PENDING</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-section">Notes</div>
+    <div class="form-row single">
+      <div class="form-group"><label for="of-notes">Notes / remarks</label><textarea id="of-notes" placeholder="Tracking number, special instructions, remarks…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeOrdersForm()">Cancel</button>
+      <button class="btn-save orders" onclick="saveOrder()">Save entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASABUY MODAL -->
+<div class="modal-backdrop" id="p-modal-bg">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="p-modal-title">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;">
+        <h2 id="p-modal-title">New pasabuy</h2>
+        <span class="modal-tag pasabuy">Pasabuy</span>
+      </div>
+      <button class="close-btn" onclick="closePasabuyForm()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="form-section">Buyer & item</div>
+    <div class="form-row">
+      <div class="form-group"><label for="pf-name">Buyer name *</label><input id="pf-name" type="text" placeholder="e.g. Juan dela Cruz"></div>
+      <div class="form-group"><label for="pf-item">Item / product *</label><input id="pf-item" type="text" placeholder="e.g. Uniqlo sweater"></div>
+    </div>
+
+    <div class="form-section">Fees & pricing</div>
+    <div class="form-row triple">
+      <div class="form-group"><label for="pf-price">Price (₱)</label><input id="pf-price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label for="pf-isf">ISF (₱)</label><input id="pf-isf" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label for="pf-addFee">Additional fee (₱)</label><input id="pf-addFee" type="number" min="0" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label for="pf-serviceFee">Service fee (₱)</label><input id="pf-serviceFee" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label for="pf-localShip">Local shipping fee (₱)</label><input id="pf-localShip" type="number" min="0" step="0.01" placeholder="0.00"></div>
+    </div>
+
+    <div class="form-section">Payment & delivery</div>
+    <div class="form-row">
+      <div class="form-group"><label for="pf-deadline">Deadline of payment</label><input id="pf-deadline" type="date"></div>
+      <div class="form-group"><label for="pf-status">Status</label>
+        <select id="pf-status">
+          <option>PENDING</option><option>PROCESSING</option><option>SHIPMENT</option>
+          <option>ARRIVED</option><option>DELIVERED</option><option>CANCELLED</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label for="pf-etaPH">ETA PH</label><input id="pf-etaPH" type="date"></div>
+      <div class="form-group"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label for="pf-mop">Mode of payment (MOP)</label>
+        <select id="pf-mop">
+          <option value="">— select —</option>
+          <option>GCash</option><option>PayMaya</option><option>Bank transfer</option>
+          <option>Cash on delivery</option><option>Credit card</option><option>Debit card</option><option>Others</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="pf-mod">Mode of delivery (MOD)</label>
+        <select id="pf-mod">
+          <option value="">— select —</option>
+          <option>J&T Express</option><option>LBC</option><option>Shopee Express</option>
+          <option>Lazada Logistics</option><option>Ninja Van</option><option>Flash Express</option>
+          <option>Grab Express</option><option>Lalamove</option><option>Others</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">Notes</div>
+    <div class="form-row single">
+      <div class="form-group"><label for="pf-notes">Notes / remarks</label><textarea id="pf-notes" placeholder="Tracking number, order link, special instructions…"></textarea></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closePasabuyForm()">Cancel</button>
+      <button class="btn-save pasabuy" onclick="savePasabuy()">Save entry</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const fmt  = n => Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtD = s => { if(!s) return '—'; const d=new Date(s+'T00:00'); return d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}); };
+  function esc(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  let activeTab = 'orders';
+  function switchTab(tab) {
+    activeTab = tab;
+    ['orders','pasabuy'].forEach(t => {
+      document.getElementById('tab-'+t).className = 'tab-btn' + (t===tab?' active-'+t:'');
+      document.getElementById('panel-'+t).className = 'panel'+(t===tab?' active':'');
+    });
+    document.getElementById('add-btn-orders').style.display = tab==='orders'?'':'none';
+    document.getElementById('add-btn-pasabuy').style.display = tab==='pasabuy'?'':'none';
+    updateGlobalCount();
+  }
+
+  function updateGlobalCount() {
+    const total = oRows.length + pRows.length;
+    document.getElementById('entry-count').textContent = `${total} entr${total===1?'y':'ies'} total`;
+  }
+
+  /* ORDERS */
+  let oRows=[], oEid=null, oSk=null, oSd=1;
+  const oFields=['name','item','price','fee','mop','mod','date','status','notes'];
+
+  function openOrdersForm(id) {
+    oEid=id??null;
+    document.getElementById('o-modal-title').textContent = id!=null?'Edit entry':'New entry';
+    const e=id!=null?oRows.find(r=>r.id===id):{};
+    oFields.forEach(k=>{ const el=document.getElementById('of-'+k); el.value=e[k]??''; el.classList.remove('error'); });
+    if(id==null) document.getElementById('of-status').value='RESERVED';
+    document.getElementById('o-modal-bg').classList.add('open');
+    document.getElementById('of-name').focus();
+  }
+  function closeOrdersForm(){ document.getElementById('o-modal-bg').classList.remove('open'); }
+
+  function saveOrder() {
+    const nEl=document.getElementById('of-name'), iEl=document.getElementById('of-item');
+    let ok=true;
+    [nEl,iEl].forEach(el=>{ if(!el.value.trim()){el.classList.add('error');ok=false;}else el.classList.remove('error'); });
+    if(!ok) return;
+    const e={id:oEid??Date.now()};
+    oFields.forEach(k=>{ const v=document.getElementById('of-'+k).value; e[k]=(k==='price'||k==='fee')?parseFloat(v)||0:v.trim(); });
+    if(oEid!=null){const i=oRows.findIndex(r=>r.id===oEid);oRows[i]=e;}else oRows.push(e);
+    closeOrdersForm(); renderOrders();
+  }
+
+  function delOrder(id){ if(!confirm('Remove this entry?'))return; oRows=oRows.filter(r=>r.id!==id); renderOrders(); }
+
+  function srtOrders(k) {
+    document.querySelectorAll('#panel-orders th').forEach(t=>t.classList.remove('sorted'));
+    event.currentTarget.classList.add('sorted');
+    oSk===k?oSd*=-1:(oSk=k,oSd=1);
+    renderOrders();
+  }
+
+  function renderOrders() {
+    const q=document.getElementById('oq').value.toLowerCase();
+    const fs=document.getElementById('ofst').value;
+    let data=oRows.filter(r=>{
+      const ms=!q||r.name.toLowerCase().includes(q)||r.item.toLowerCase().includes(q);
+      return ms&&(!fs||r.status===fs);
+    });
+    if(oSk) data.sort((a,b)=>{ const av=a[oSk],bv=b[oSk]; return(typeof av==='number'?av-bv:String(av).localeCompare(String(bv)))*oSd; });
+
+    const tbd=document.getElementById('o-tbd');
+    tbd.innerHTML='';
+    document.getElementById('o-emp').style.display=data.length?'none':'block';
+    data.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="td-buyer">${esc(r.name)}</td>
+        <td class="td-item">${esc(r.item)}</td>
+        <td class="td-mono">₱${fmt(r.price)}</td>
+        <td class="td-mono td-muted">₱${fmt(r.fee)}</td>
+        <td class="td-muted">${fmtD(r.date)}</td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>
+        <td class="td-muted">${esc(r.mop)||'—'}</td>
+        <td class="td-muted">${esc(r.mod)||'—'}</td>
+        <td class="td-notes" title="${esc(r.notes)}">${esc(r.notes)||'—'}</td>
+        <td><div class="row-actions">
+          <button class="row-btn" onclick="openOrdersForm(${r.id})" title="Edit">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="row-btn danger" onclick="delOrder(${r.id})" title="Delete">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div></td>`;
+      tbd.appendChild(tr);
+    });
+
+    const total=oRows.reduce((s,r)=>s+(r.price||0)+(r.fee||0),0);
+    document.getElementById('o-total').textContent=oRows.length;
+    document.getElementById('o-amount').textContent='₱'+fmt(total);
+    document.getElementById('o-reserved').textContent=oRows.filter(r=>r.status==='RESERVED').length;
+    document.getElementById('o-delivered').textContent=oRows.filter(r=>r.status==='DELIVERED').length;
+    document.getElementById('tab-badge-orders').textContent=oRows.length;
+    updateGlobalCount();
+  }
+
+  /* PASABUY */
+  let pRows=[], pEid=null, pSk=null, pSd=1;
+  const pFields=['name','item','price','isf','addFee','serviceFee','localShip','deadline','status','etaPH','mop','mod','notes'];
+
+  function openPasabuyForm(id) {
+    pEid=id??null;
+    document.getElementById('p-modal-title').textContent=id!=null?'Edit pasabuy':'New pasabuy';
+    const e=id!=null?pRows.find(r=>r.id===id):{};
+    pFields.forEach(k=>{ const el=document.getElementById('pf-'+k); if(el){el.value=e[k]??'';el.classList.remove('error');} });
+    if(id==null) document.getElementById('pf-status').value='PENDING';
+    document.getElementById('p-modal-bg').classList.add('open');
+    document.getElementById('pf-name').focus();
+  }
+  function closePasabuyForm(){ document.getElementById('p-modal-bg').classList.remove('open'); }
+
+  function savePasabuy() {
+    const nEl=document.getElementById('pf-name'), iEl=document.getElementById('pf-item');
+    let ok=true;
+    [nEl,iEl].forEach(el=>{ if(!el.value.trim()){el.classList.add('error');ok=false;}else el.classList.remove('error'); });
+    if(!ok) return;
+    const numFields=['price','isf','addFee','serviceFee','localShip'];
+    const e={id:pEid??Date.now()};
+    pFields.forEach(k=>{ const el=document.getElementById('pf-'+k); if(el){ const v=el.value; e[k]=numFields.includes(k)?parseFloat(v)||0:v.trim(); } });
+    if(pEid!=null){const i=pRows.findIndex(r=>r.id===pEid);pRows[i]=e;}else pRows.push(e);
+    closePasabuyForm(); renderPasabuy();
+  }
+
+  function delPasabuy(id){ if(!confirm('Remove this entry?'))return; pRows=pRows.filter(r=>r.id!==id); renderPasabuy(); }
+
+  function srtPasabuy(k) {
+    document.querySelectorAll('#panel-pasabuy th').forEach(t=>t.classList.remove('sorted'));
+    event.currentTarget.classList.add('sorted');
+    pSk===k?pSd*=-1:(pSk=k,pSd=1);
+    renderPasabuy();
+  }
+
+  function renderPasabuy() {
+    const q=document.getElementById('pq').value.toLowerCase();
+    const fs=document.getElementById('pfst').value;
+    let data=pRows.filter(r=>{
+      const ms=!q||r.name.toLowerCase().includes(q)||r.item.toLowerCase().includes(q);
+      return ms&&(!fs||r.status===fs);
+    });
+    if(pSk) data.sort((a,b)=>{ const av=a[pSk],bv=b[pSk]; return(typeof av==='number'?av-bv:String(av).localeCompare(String(bv)))*pSd; });
+
+    const tbd=document.getElementById('p-tbd');
+    tbd.innerHTML='';
+    document.getElementById('p-emp').style.display=data.length?'none':'block';
+    data.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td class="td-buyer">${esc(r.name)}</td>
+        <td class="td-item">${esc(r.item)}</td>
+        <td class="td-mono">₱${fmt(r.price)}</td>
+        <td class="td-mono td-muted">₱${fmt(r.isf)}</td>
+        <td class="td-mono td-muted">₱${fmt(r.addFee)}</td>
+        <td class="td-mono td-muted">₱${fmt(r.serviceFee)}</td>
+        <td class="td-mono td-muted">₱${fmt(r.localShip)}</td>
+        <td class="td-muted">${fmtD(r.deadline)}</td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>
+        <td class="td-muted">${fmtD(r.etaPH)}</td>
+        <td class="td-muted">${esc(r.mop)||'—'}</td>
+        <td class="td-muted">${esc(r.mod)||'—'}</td>
+        <td class="td-notes" title="${esc(r.notes)}">${esc(r.notes)||'—'}</td>
+        <td><div class="row-actions">
+          <button class="row-btn" onclick="openPasabuyForm(${r.id})" title="Edit">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="row-btn danger" onclick="delPasabuy(${r.id})" title="Delete">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div></td>`;
+      tbd.appendChild(tr);
+    });
+
+    const numFields=['price','isf','addFee','serviceFee','localShip'];
+    const total=pRows.reduce((s,r)=>s+numFields.reduce((ss,k)=>ss+(r[k]||0),0),0);
+    document.getElementById('p-total').textContent=pRows.length;
+    document.getElementById('p-amount').textContent='₱'+fmt(total);
+    document.getElementById('p-pending').textContent=pRows.filter(r=>r.status==='PENDING').length;
+    document.getElementById('p-arrived').textContent=pRows.filter(r=>r.status==='ARRIVED').length;
+    document.getElementById('p-delivered').textContent=pRows.filter(r=>r.status==='DELIVERED').length;
+    document.getElementById('tab-badge-pasabuy').textContent=pRows.length;
+    updateGlobalCount();
+  }
+
+  document.getElementById('oq').addEventListener('input', renderOrders);
+  document.getElementById('ofst').addEventListener('change', renderOrders);
+  document.getElementById('pq').addEventListener('input', renderPasabuy);
+  document.getElementById('pfst').addEventListener('change', renderPasabuy);
+
+  document.getElementById('o-modal-bg').addEventListener('click', function(e){ if(e.target===this) closeOrdersForm(); });
+  document.getElementById('p-modal-bg').addEventListener('click', function(e){ if(e.target===this) closePasabuyForm(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeOrdersForm(); closePasabuyForm(); } });
+
+  renderOrders();
+  renderPasabuy();
+  switchTab('orders');
+</script>
+</body>
+</html>

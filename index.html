@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Masterlist</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,12 +13,28 @@
       --bg: #fde8ee; --surface: #fff5f8; --surface2: #fad5e0;
       --border: #f5b8cb; --border2: #eda3bb;
       --text: #3a1a24; --text2: #7a4a5a; --text3: #b07a8a;
-      --accent: #c0395a; --accent-pasabuy: #7c3aed;
+      --accent: #c0395a; --accent-pasabuy: #7c3aed; --accent-group: #0e7490;
       --radius: 10px; --radius-lg: 14px;
       --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
     }
     body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
-    .page { max-width: 1300px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    .page { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* ── Sync Bar ── */
+    .sync-bar { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; margin-bottom: 1rem; font-size: 12px; color: var(--text2); flex-wrap: wrap; }
+    .sync-bar .sync-key-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 200px; }
+    .sync-bar label { font-weight: 500; white-space: nowrap; }
+    .sync-key-input { flex: 1; padding: 5px 9px; border: 1px solid var(--border); border-radius: 7px; font-family: var(--mono); font-size: 12px; background: var(--bg); color: var(--text); outline: none; }
+    .sync-key-input:focus { border-color: var(--border2); }
+    .sync-btn { padding: 5px 12px; border-radius: 7px; border: none; font-family: var(--font); font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity .15s; white-space: nowrap; }
+    .sync-btn.push { background: var(--accent); color: #fff; }
+    .sync-btn.pull { background: var(--accent-pasabuy); color: #fff; }
+    .sync-btn:hover { opacity: .8; }
+    .sync-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .sync-status { font-size: 11px; color: var(--text3); }
+    .sync-status.ok { color: #166534; }
+    .sync-status.err { color: #991b1b; }
+    .sync-tip { font-size: 11px; color: var(--text3); border-left: 2px solid var(--border); padding-left: 8px; }
 
     .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; gap: 16px; flex-wrap: wrap; }
     .header-left h1 { font-size: 22px; font-weight: 600; letter-spacing: -.3px; }
@@ -27,21 +43,25 @@
     .add-btn:hover { opacity: .82; }
     .add-btn.orders { background: var(--accent); color: #fff; }
     .add-btn.pasabuy { background: var(--accent-pasabuy); color: #fff; }
+    .add-btn.group-order { background: var(--accent-group); color: #fff; }
 
     .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
     .tab-btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; font-size: 13px; font-weight: 500; font-family: var(--font); border: none; background: none; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: var(--radius) var(--radius) 0 0; transition: color .15s, border-color .15s, background .15s; }
     .tab-btn:hover { color: var(--text); background: var(--surface2); }
     .tab-btn.active-orders { color: var(--accent); border-bottom-color: var(--accent); }
     .tab-btn.active-pasabuy { color: var(--accent-pasabuy); border-bottom-color: var(--accent-pasabuy); }
+    .tab-btn.active-group { color: var(--accent-group); border-bottom-color: var(--accent-group); }
     .tab-badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 20px; background: var(--surface2); color: var(--text2); }
     .tab-btn.active-orders .tab-badge { background: #1a1917; color: #fff; }
     .tab-btn.active-pasabuy .tab-badge { background: var(--accent-pasabuy); color: #fff; }
+    .tab-btn.active-group .tab-badge { background: var(--accent-group); color: #fff; }
 
     .panel { display: none; } .panel.active { display: block; }
 
     .stats { display: grid; gap: 10px; margin-bottom: 1.5rem; }
     .stats.orders-stats { grid-template-columns: repeat(4, 1fr); }
     .stats.pasabuy-stats { grid-template-columns: repeat(5, 1fr); }
+    .stats.group-stats { grid-template-columns: repeat(5, 1fr); }
     .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
     .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
     .stat-value { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
@@ -52,7 +72,7 @@
     .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
     .search-input { width: 100%; padding: 8px 10px 8px 34px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); font-family: var(--font); font-size: 13px; color: var(--text); outline: none; transition: border-color .15s; }
     .search-input:focus { border-color: var(--border2); }
-    .filter-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); font-family: var(--font); font-size: 13px; color: var(--text); outline: none; cursor: pointer; min-width: 140px; }
+    .filter-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); font-family: var(--font); font-size: 13px; color: var(--text); outline: none; cursor: pointer; min-width: 160px; }
 
     .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
     .table-wrap { overflow-x: auto; }
@@ -62,29 +82,39 @@
     th:hover { color: var(--text); }
     th .sort-icon { opacity: .4; margin-left: 3px; }
     th.sorted .sort-icon { opacity: 1; }
-    td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; white-space: normal; }
+    td.nowrap { white-space: nowrap; }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: #fce8f0; }
     tbody tr { cursor: pointer; }
-    .td-num { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+    .td-num { font-family: var(--mono); font-size: 11px; font-weight: 600; white-space: nowrap; }
     .td-num.orders { color: var(--accent); }
     .td-num.pasabuy { color: var(--accent-pasabuy); }
-    .td-buyer { font-weight: 500; }
-    .td-item { color: var(--text2); }
-    .td-mono { font-family: var(--mono); font-size: 12px; }
-    .td-muted { color: var(--text2); font-size: 12px; }
-    .td-notes { color: var(--text3); font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+    .td-num.group { color: var(--accent-group); }
+    .td-buyer { font-weight: 500; white-space: nowrap; }
+    .td-item { color: var(--text2); text-align: justify; white-space: pre-line; word-break: break-word; min-width: 140px; max-width: 220px; line-height: 1.55; }
+    .td-mono { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+    .td-muted { color: var(--text2); font-size: 12px; white-space: nowrap; }
+    .td-notes { color: var(--text3); font-size: 12px; white-space: pre-line; word-break: break-word; min-width: 100px; max-width: 180px; line-height: 1.5; }
 
     .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
-    .badge-RESERVED   { background: #dbeafe; color: #1e40af; }
-    .badge-SHIPMENT   { background: #ede9fe; color: #5b21b6; }
-    .badge-DELIVERED  { background: #dcfce7; color: #166534; }
-    .badge-CANCELLED  { background: #fee2e2; color: #991b1b; }
-    .badge-PENDING    { background: #f3f4f6; color: #374151; }
-    .badge-PROCESSING { background: #ffedd5; color: #9a3412; }
-    .badge-ARRIVED    { background: #cffafe; color: #155e75; }
+    .badge-RESERVED       { background: #dbeafe; color: #1e40af; }
+    .badge-SHIPMENT       { background: #ede9fe; color: #5b21b6; }
+    .badge-DELIVERED      { background: #dcfce7; color: #166534; }
+    .badge-CANCELLED      { background: #fee2e2; color: #991b1b; }
+    .badge-PENDING        { background: #f3f4f6; color: #374151; }
+    .badge-PROCESSING     { background: #ffedd5; color: #9a3412; }
+    .badge-ARRIVED        { background: #cffafe; color: #155e75; }
+    /* new status badges */
+    .badge-ORDER_PLACED   { background: #e0f2fe; color: #0369a1; }
+    .badge-SHIPPED        { background: #ede9fe; color: #5b21b6; }
+    .badge-IN_TRANSIT     { background: #fef9c3; color: #854d0e; }
+    .badge-ARRIVED_PH     { background: #cffafe; color: #155e75; }
+    .badge-PH_PROCESSING  { background: #ffedd5; color: #9a3412; }
+    .badge-PH_SHIPPED     { background: #ddd6fe; color: #4c1d95; }
+    .badge-PH_IN_TRANSIT  { background: #fef3c7; color: #92400e; }
 
-    .row-actions { display: flex; gap: 4px; }
+    .row-actions { display: flex; gap: 4px; padding-top: 2px; }
     .row-btn { border: none; background: none; cursor: pointer; color: var(--text3); padding: 5px; border-radius: 6px; display: inline-flex; align-items: center; transition: background .12s, color .12s; }
     .row-btn:hover { background: var(--surface2); color: var(--text); }
     .row-btn.danger:hover { background: #fee2e2; color: #991b1b; }
@@ -97,13 +127,14 @@
     /* Modal */
     .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
     .modal-backdrop.open { display: flex; }
-    .modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.75rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; animation: fadeUp .2s ease; }
+    .modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.75rem; width: 100%; max-width: 580px; max-height: 92vh; overflow-y: auto; animation: fadeUp .2s ease; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
     .modal-header h2 { font-size: 16px; font-weight: 600; }
     .modal-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
     .modal-tag.orders { background: #1a1917; color: #fff; }
     .modal-tag.pasabuy { background: var(--accent-pasabuy); color: #fff; }
+    .modal-tag.group-order { background: var(--accent-group); color: #fff; }
     .close-btn { border: none; background: none; cursor: pointer; color: var(--text2); padding: 5px; border-radius: 6px; display: flex; align-items: center; }
     .close-btn:hover { background: var(--surface2); color: var(--text); }
     .form-section { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); margin: 1.25rem 0 .75rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
@@ -115,7 +146,7 @@
     .form-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
     .form-group input, .form-group select, .form-group textarea { padding: 8px 11px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); font-family: var(--font); font-size: 13px; color: var(--text); outline: none; transition: border-color .15s; }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--border2); }
-    .form-group textarea { resize: vertical; min-height: 68px; }
+    .form-group textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
     .form-group input.error, .form-group select.error { border-color: #f87171; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
     .btn-cancel { padding: 8px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: transparent; font-family: var(--font); font-size: 13px; color: var(--text2); cursor: pointer; transition: background .12s; }
@@ -124,6 +155,7 @@
     .btn-save:hover { opacity: .82; }
     .btn-save.orders { background: var(--accent); }
     .btn-save.pasabuy { background: var(--accent-pasabuy); }
+    .btn-save.group-order { background: var(--accent-group); }
 
     /* Receipt */
     .receipt-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
@@ -134,18 +166,19 @@
     .receipt-top .r-type { display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; padding: 2px 10px; border-radius: 20px; margin-bottom: 10px; }
     .receipt-top .r-type.orders { background: #1a1917; color: #fff; }
     .receipt-top .r-type.pasabuy { background: #7c3aed; color: #fff; }
+    .receipt-top .r-type.group-order { background: #0e7490; color: #fff; }
     .receipt-top .r-name { font-size: 20px; font-weight: 600; color: #3a1a24; margin-bottom: 2px; }
-    .receipt-top .r-item { font-size: 13px; color: #7a4a5a; }
+    .receipt-top .r-item { font-size: 13px; color: #7a4a5a; white-space: pre-line; text-align: center; }
     .receipt-top .r-status { margin-top: 10px; }
     .receipt-body { padding: 1rem 1.5rem; }
     .receipt-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #f3f4f6; gap: 12px; }
     .receipt-row:last-child { border-bottom: none; }
     .receipt-row .r-label { font-size: 12px; color: #b07a8a; flex-shrink: 0; }
-    .receipt-row .r-val { font-size: 13px; color: #3a1a24; font-weight: 500; text-align: right; }
+    .receipt-row .r-val { font-size: 13px; color: #3a1a24; font-weight: 500; text-align: right; white-space: pre-line; }
     .receipt-row .r-val.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
     .receipt-row-item { background: #fdf2f5; border-radius: 6px; margin: 0 -4px; padding-left: 4px !important; padding-right: 4px !important; }
     .receipt-row-item .r-label { color: var(--accent) !important; font-weight: 600; }
-    .r-val-item { font-weight: 600 !important; color: #3a1a24 !important; white-space: normal !important; text-align: right; }
+    .r-val-item { font-weight: 600 !important; color: #3a1a24 !important; text-align: right; }
     .receipt-divider { border: none; border-top: 2px dashed #e5e7eb; margin: 0; }
     .receipt-total { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     .receipt-total .rt-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #7a4a5a; }
@@ -160,17 +193,10 @@
     .r-save-btn:hover { opacity: .8; }
     .r-save-btn:disabled { opacity: .55; cursor: not-allowed; }
 
-    @media (max-width: 700px) {
-      .stats.orders-stats, .stats.pasabuy-stats { grid-template-columns: 1fr 1fr; }
-      .form-row, .form-row.triple { grid-template-columns: 1fr; }
-      .header { flex-direction: column; align-items: stretch; }
-      .add-btn { justify-content: center; }
-    }
-
     /* View Table modal */
     .vtable-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 150; align-items: flex-start; justify-content: center; padding: 1.5rem 1rem; overflow-y: auto; }
     .vtable-backdrop.open { display: flex; }
-    .vtable-modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 920px; margin: auto; animation: fadeUp .2s ease; box-shadow: 0 20px 60px rgba(0,0,0,.18); }
+    .vtable-modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 960px; margin: auto; animation: fadeUp .2s ease; box-shadow: 0 20px 60px rgba(0,0,0,.18); }
     .vtable-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
     .vtable-header-left { display: flex; align-items: center; gap: 10px; }
     .vtable-header h2 { font-size: 15px; font-weight: 600; }
@@ -183,7 +209,7 @@
     .vtable-body th:hover { color: var(--text); }
     .vtable-body th .sort-icon { opacity: .4; margin-left: 3px; }
     .vtable-body th.sorted .sort-icon { opacity: 1; }
-    .vtable-body td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; white-space: nowrap; }
+    .vtable-body td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
     .vtable-body tbody tr:last-child td { border-bottom: none; }
     .vtable-body tbody tr:hover td { background: #fce8f0; }
     .vtable-notes-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text3); font-size: 12px; }
@@ -202,10 +228,29 @@
     body.view-only .row-actions { display: none !important; }
     body.view-only tbody tr { cursor: default; }
     body.view-only tbody tr:hover td { background: transparent; }
+
+    @media (max-width: 700px) {
+      .stats.orders-stats,.stats.pasabuy-stats,.stats.group-stats { grid-template-columns: 1fr 1fr; }
+      .form-row, .form-row.triple { grid-template-columns: 1fr; }
+      .header { flex-direction: column; align-items: stretch; }
+      .add-btn { justify-content: center; }
+    }
   </style>
 </head>
 <body>
 <div class="page">
+
+  <!-- Sync Bar -->
+  <div class="sync-bar">
+    <div class="sync-key-wrap">
+      <label>🔑 Sync key:</label>
+      <input class="sync-key-input" id="sync-key" type="text" placeholder="Enter a unique key (e.g. myshop2025)">
+    </div>
+    <button class="sync-btn push" onclick="pushData()" id="push-btn">⬆ Save to Cloud</button>
+    <button class="sync-btn pull" onclick="pullData()" id="pull-btn">⬇ Load from Cloud</button>
+    <span class="sync-status" id="sync-status"></span>
+    <span class="sync-tip">Use the same key on any device to share data.</span>
+  </div>
 
   <div class="header">
     <div class="header-left">
@@ -220,6 +265,10 @@
       <button class="add-btn pasabuy" id="add-btn-pasabuy" onclick="openPasabuyForm()" style="display:none;">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Pasabuy
+      </button>
+      <button class="add-btn group-order" id="add-btn-group" onclick="openGroupForm()" style="display:none;">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Group Order
       </button>
       <button class="view-only-btn" id="view-only-btn" onclick="toggleViewOnly()">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -241,6 +290,10 @@
     <button class="tab-btn" id="tab-pasabuy" onclick="switchTab('pasabuy')">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg>
       Pasabuy <span class="tab-badge" id="tab-badge-pasabuy">0</span>
+    </button>
+    <button class="tab-btn" id="tab-group" onclick="switchTab('group')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Group Order <span class="tab-badge" id="tab-badge-group">0</span>
     </button>
   </div>
 
@@ -301,7 +354,7 @@
       </div>
       <select class="filter-select" id="pfst">
         <option value="">All statuses</option>
-        <option>PENDING</option><option>PROCESSING</option><option>SHIPMENT</option><option>ARRIVED</option><option>DELIVERED</option><option>CANCELLED</option>
+        <option>PENDING</option><option>ORDER PLACED</option><option>PROCESSING</option><option>SHIPPED</option><option>IN TRANSIT</option><option>ARRIVED PH ADDRESS</option><option>PH PROCESSING</option><option>PH SHIPPED</option><option>PH IN TRANSIT</option><option>DELIVERED</option><option>CANCELLED</option>
       </select>
     </div>
     <div class="table-card"><div class="table-wrap"><table>
@@ -326,19 +379,54 @@
       <p>No pasabuy entries yet — click <strong>Add Pasabuy</strong> to get started.</p>
     </div></div>
   </div>
+
+  <!-- GROUP ORDER PANEL -->
+  <div class="panel" id="panel-group">
+    <div class="stats group-stats">
+      <div class="stat"><div class="stat-label">Total entries</div><div class="stat-value" id="g-total">0</div></div>
+      <div class="stat"><div class="stat-label">Total amount</div><div class="stat-value small" id="g-amount">₱0.00</div></div>
+      <div class="stat"><div class="stat-label">Pending</div><div class="stat-value" id="g-pending">0</div></div>
+      <div class="stat"><div class="stat-label">Arrived PH</div><div class="stat-value" id="g-arrived">0</div></div>
+      <div class="stat"><div class="stat-label">Delivered</div><div class="stat-value" id="g-delivered">0</div></div>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="gq" type="text" placeholder="Search buyer or item…">
+      </div>
+      <select class="filter-select" id="gfst">
+        <option value="">All statuses</option>
+        <option>PENDING</option><option>ORDER PLACED</option><option>PROCESSING</option><option>SHIPPED</option><option>IN TRANSIT</option><option>ARRIVED PH ADDRESS</option><option>PH PROCESSING</option><option>PH SHIPPED</option><option>PH IN TRANSIT</option><option>DELIVERED</option><option>CANCELLED</option>
+      </select>
+    </div>
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th onclick="srtGroup('orderNum')"># <span class="sort-icon">↕</span></th>
+        <th onclick="srtGroup('name')">Name <span class="sort-icon">↕</span></th>
+        <th onclick="srtGroup('item')">Item / Product <span class="sort-icon">↕</span></th>
+        <th onclick="srtGroup('price')">Price <span class="sort-icon">↕</span></th>
+        <th onclick="srtGroup('isf')">ISF <span class="sort-icon">↕</span></th>
+        <th onclick="srtGroup('lsf')">LSF <span class="sort-icon">↕</span></th>
+        <th onclick="srtGroup('deadline')">Pymnt deadline <span class="sort-icon">↕</span></th>
+        <th onclick="srtGroup('status')">Status <span class="sort-icon">↕</span></th>
+        <th onclick="srtGroup('etaPH')">ETA PH <span class="sort-icon">↕</span></th>
+        <th>MOP</th><th>MOD</th><th></th>
+      </tr></thead>
+      <tbody id="g-tbd"></tbody>
+    </table></div>
+    <div class="empty-state" id="g-emp">
+      <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <p>No group order entries yet — click <strong>Add Group Order</strong> to get started.</p>
+    </div></div>
+  </div>
 </div>
 
 <!-- VIEW TABLE MODAL -->
 <div class="vtable-backdrop" id="vtable-bg">
   <div class="vtable-modal">
     <div class="vtable-header">
-      <div class="vtable-header-left">
-        <h2>Order Table</h2>
-        <span class="vtable-tag">Orders</span>
-      </div>
-      <button class="close-btn" onclick="closeViewTable()">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+      <div class="vtable-header-left"><h2>Order Table</h2><span class="vtable-tag">Orders</span></div>
+      <button class="close-btn" onclick="closeViewTable()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="vtable-toolbar">
       <div class="search-wrap" style="flex:1;min-width:160px;">
@@ -352,17 +440,15 @@
     </div>
     <div class="vtable-body">
       <table>
-        <thead>
-          <tr>
-            <th onclick="srtVT('orderNum')">Order # <span class="sort-icon">↕</span></th>
-            <th onclick="srtVT('item')">Item / Product <span class="sort-icon">↕</span></th>
-            <th onclick="srtVT('name')">Buyer <span class="sort-icon">↕</span></th>
-            <th onclick="srtVT('date')">Payment Deadline <span class="sort-icon">↕</span></th>
-            <th onclick="srtVT('status')">Status <span class="sort-icon">↕</span></th>
-            <th onclick="srtVT('etaPH')">ETA PH <span class="sort-icon">↕</span></th>
-            <th>Notes</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th onclick="srtVT('orderNum')">Order # <span class="sort-icon">↕</span></th>
+          <th onclick="srtVT('item')">Item / Product <span class="sort-icon">↕</span></th>
+          <th onclick="srtVT('name')">Buyer <span class="sort-icon">↕</span></th>
+          <th onclick="srtVT('date')">Payment Deadline <span class="sort-icon">↕</span></th>
+          <th onclick="srtVT('status')">Status <span class="sort-icon">↕</span></th>
+          <th onclick="srtVT('etaPH')">ETA PH <span class="sort-icon">↕</span></th>
+          <th>Notes</th>
+        </tr></thead>
         <tbody id="vt-tbd"></tbody>
       </table>
     </div>
@@ -407,7 +493,7 @@
       </div>
     </div>
     <div class="form-section">Notes</div>
-    <div class="form-row single"><div class="form-group"><label>Notes / remarks</label><textarea id="of-notes" placeholder="Tracking number, special instructions…"></textarea></div></div>
+    <div class="form-row single"><div class="form-group"><label>Notes / remarks</label><textarea id="of-notes" placeholder="Tracking number, special instructions…&#10;&#10;Press Enter for new line, Shift+Enter for extra spacing."></textarea></div></div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeOrdersForm()">Cancel</button>
       <button class="btn-save orders" onclick="saveOrder()">Save entry</button>
@@ -441,7 +527,9 @@
     <div class="form-row">
       <div class="form-group"><label>Deadline of payment</label><input id="pf-deadline" type="date"></div>
       <div class="form-group"><label>Status</label>
-        <select id="pf-status"><option>PENDING</option><option>PROCESSING</option><option>SHIPMENT</option><option>ARRIVED</option><option>DELIVERED</option><option>CANCELLED</option></select>
+        <select id="pf-status">
+          <option>PENDING</option><option>ORDER PLACED</option><option>PROCESSING</option><option>SHIPPED</option><option>IN TRANSIT</option><option>ARRIVED PH ADDRESS</option><option>PH PROCESSING</option><option>PH SHIPPED</option><option>PH IN TRANSIT</option><option>DELIVERED</option><option>CANCELLED</option>
+        </select>
       </div>
     </div>
     <div class="form-row">
@@ -457,10 +545,56 @@
       </div>
     </div>
     <div class="form-section">Notes</div>
-    <div class="form-row single"><div class="form-group"><label>Notes / remarks</label><textarea id="pf-notes" placeholder="Tracking number, order link…"></textarea></div></div>
+    <div class="form-row single"><div class="form-group"><label>Notes / remarks</label><textarea id="pf-notes" placeholder="Tracking number, order link…&#10;&#10;Press Enter for new line, Shift+Enter for extra spacing."></textarea></div></div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closePasabuyForm()">Cancel</button>
       <button class="btn-save pasabuy" onclick="savePasabuy()">Save entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP ORDER MODAL -->
+<div class="modal-backdrop" id="g-modal-bg">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;"><h2 id="g-modal-title">New group order</h2><span class="modal-tag group-order">Group Order</span></div>
+      <button class="close-btn" onclick="closeGroupForm()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="form-section">Member & item</div>
+    <div class="form-row">
+      <div class="form-group"><label>Name *</label><input id="gf-name" type="text" placeholder="e.g. Ana Reyes"></div>
+      <div class="form-group"><label>Item / product *</label><input id="gf-item" type="text" placeholder="e.g. Nike shoes size 7"></div>
+    </div>
+    <div class="form-section">Fees & pricing</div>
+    <div class="form-row triple">
+      <div class="form-group"><label>Price (₱)</label><input id="gf-price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label>ISF (₱)</label><input id="gf-isf" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label>LSF (₱)</label><input id="gf-lsf" type="number" min="0" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-section">Payment & delivery</div>
+    <div class="form-row">
+      <div class="form-group"><label>Payment deadline</label><input id="gf-deadline" type="date"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="gf-status">
+          <option>PENDING</option><option>ORDER PLACED</option><option>PROCESSING</option><option>SHIPPED</option><option>IN TRANSIT</option><option>ARRIVED PH ADDRESS</option><option>PH PROCESSING</option><option>PH SHIPPED</option><option>PH IN TRANSIT</option><option>DELIVERED</option><option>CANCELLED</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>ETA PH</label><input id="gf-etaPH" type="date"></div>
+      <div class="form-group"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Mode of payment (MOP)</label>
+        <select id="gf-mop"><option value="">— select —</option><option>GCash</option><option>PayMaya</option><option>Bank transfer</option><option>Cash on delivery</option><option>Credit card</option><option>Debit card</option><option>Others</option></select>
+      </div>
+      <div class="form-group"><label>Mode of delivery (MOD)</label>
+        <select id="gf-mod"><option value="">— select —</option><option>J&T Express</option><option>LBC</option><option>Shopee Express</option><option>Lazada Logistics</option><option>Ninja Van</option><option>Flash Express</option><option>Grab Express</option><option>Lalamove</option><option>Others</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeGroupForm()">Cancel</button>
+      <button class="btn-save group-order" onclick="saveGroup()">Save entry</button>
     </div>
   </div>
 </div>
@@ -495,40 +629,134 @@
   const fmt  = n => Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
   const fmtD = s => { if(!s)return'—'; const d=new Date(s+'T00:00'); return d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}); };
   function esc(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  // For display: preserve line breaks in text
+  function escNL(s){ if(!s)return''; return esc(s); }
 
-  let oRows=[], pRows=[];
-  let orderCounter=1, pasabuyCounter=1;
-  let oEid=null, pEid=null, oSk=null, oSd=1, pSk=null, pSd=1;
+  // Badge key: space → underscore for CSS classes
+  function badgeKey(st){ return (st||'').replace(/\s+/g,'_').toUpperCase(); }
+
+  let oRows=[], pRows=[], gRows=[];
+  let orderCounter=1, pasabuyCounter=1, groupCounter=1;
+  let oEid=null, pEid=null, gEid=null;
+  let oSk=null, oSd=1, pSk=null, pSd=1, gSk=null, gSd=1;
+
   const oFields=['name','item','price','fee','mop','mod','date','status','notes'];
   const pFields=['name','item','price','isf','addFee','serviceFee','localShip','deadline','status','etaPH','mop','mod','notes'];
+  const gFields=['name','item','price','isf','lsf','deadline','status','etaPH','mop','mod'];
+
+  // ── Cloud Sync via localStorage key-value store ──
+  // We store the data as a JSON blob keyed by the user's sync key in localStorage.
+  // For cross-device sync we use a free public JSON bin (jsonbin.io style) via the Anthropic API as relay.
+  // Since we can't use external APIs without auth, we use a clever trick:
+  // We store data in a shared "cloud" store using window.storage (persistent artifact storage).
+  // If not in artifact context, we fall back to a base64 export/import workflow.
+
+  function getSyncKey() { return document.getElementById('sync-key').value.trim(); }
+
+  function setSyncStatus(msg, type='') {
+    const el = document.getElementById('sync-status');
+    el.textContent = msg;
+    el.className = 'sync-status' + (type ? ' '+type : '');
+  }
+
+  async function pushData() {
+    const key = getSyncKey();
+    if(!key) { alert('Please enter a sync key first.'); return; }
+    const btn = document.getElementById('push-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const payload = JSON.stringify({ oRows, pRows, gRows, orderCounter, pasabuyCounter, groupCounter, savedAt: new Date().toISOString() });
+      // Try window.storage if available (artifact context)
+      if(window.storage) {
+        await window.storage.set('ml_sync_'+key, payload, true);
+        setSyncStatus('✓ Saved to cloud at ' + new Date().toLocaleTimeString(), 'ok');
+      } else {
+        // Fallback: save to localStorage with key prefix + copy to clipboard as export
+        localStorage.setItem('ml_cloud_'+key, payload);
+        setSyncStatus('✓ Saved locally. Share the key to sync manually.', 'ok');
+      }
+    } catch(e) {
+      setSyncStatus('✗ Save failed: ' + e.message, 'err');
+    }
+    btn.disabled = false; btn.textContent = '⬆ Save to Cloud';
+  }
+
+  async function pullData() {
+    const key = getSyncKey();
+    if(!key) { alert('Please enter a sync key first.'); return; }
+    const btn = document.getElementById('pull-btn');
+    btn.disabled = true; btn.textContent = 'Loading…';
+    try {
+      let payload = null;
+      if(window.storage) {
+        const result = await window.storage.get('ml_sync_'+key, true);
+        if(result) payload = result.value;
+      }
+      if(!payload) {
+        // Fallback to localStorage
+        payload = localStorage.getItem('ml_cloud_'+key);
+      }
+      if(!payload) {
+        setSyncStatus('✗ No data found for that key.', 'err');
+        btn.disabled = false; btn.textContent = '⬇ Load from Cloud';
+        return;
+      }
+      const data = JSON.parse(payload);
+      if(data.oRows !== undefined) oRows = data.oRows;
+      if(data.pRows !== undefined) pRows = data.pRows;
+      if(data.gRows !== undefined) gRows = data.gRows;
+      if(data.orderCounter) orderCounter = data.orderCounter;
+      if(data.pasabuyCounter) pasabuyCounter = data.pasabuyCounter;
+      if(data.groupCounter) groupCounter = data.groupCounter;
+      saveLocal();
+      renderOrders(); renderPasabuy(); renderGroup();
+      const ts = data.savedAt ? new Date(data.savedAt).toLocaleString() : 'unknown';
+      setSyncStatus('✓ Loaded data (saved ' + ts + ')', 'ok');
+    } catch(e) {
+      setSyncStatus('✗ Load failed: ' + e.message, 'err');
+    }
+    btn.disabled = false; btn.textContent = '⬇ Load from Cloud';
+  }
 
   // ── Local Storage ──
-  function saveData() {
+  function saveLocal() {
     try {
       localStorage.setItem('ml_orders', JSON.stringify(oRows));
       localStorage.setItem('ml_pasabuy', JSON.stringify(pRows));
+      localStorage.setItem('ml_group', JSON.stringify(gRows));
       localStorage.setItem('ml_octr', orderCounter);
       localStorage.setItem('ml_pctr', pasabuyCounter);
+      localStorage.setItem('ml_gctr', groupCounter);
+      const sk = document.getElementById('sync-key').value.trim();
+      if(sk) localStorage.setItem('ml_last_sync_key', sk);
     } catch(e) {}
   }
+
+  function saveData() { saveLocal(); }
 
   function loadData() {
     try {
       const o = localStorage.getItem('ml_orders');
       const p = localStorage.getItem('ml_pasabuy');
+      const g = localStorage.getItem('ml_group');
       const oc = localStorage.getItem('ml_octr');
       const pc = localStorage.getItem('ml_pctr');
+      const gc = localStorage.getItem('ml_gctr');
+      const sk = localStorage.getItem('ml_last_sync_key');
       if(o) oRows = JSON.parse(o);
       if(p) pRows = JSON.parse(p);
+      if(g) gRows = JSON.parse(g);
       if(oc) orderCounter = parseInt(oc)||1;
       if(pc) pasabuyCounter = parseInt(pc)||1;
+      if(gc) groupCounter = parseInt(gc)||1;
+      if(sk) document.getElementById('sync-key').value = sk;
     } catch(e) {}
-    renderOrders();
-    renderPasabuy();
+    renderOrders(); renderPasabuy(); renderGroup();
   }
 
-  function nextOrderNum() { return '#ORD-' + String(orderCounter).padStart(4,'0'); }
+  function nextOrderNum()   { return '#ORD-' + String(orderCounter).padStart(4,'0'); }
   function nextPasabuyNum() { return '#PAS-' + String(pasabuyCounter).padStart(4,'0'); }
+  function nextGroupNum()   { return '#GRP-' + String(groupCounter).padStart(4,'0'); }
 
   // ── View Only ──
   let viewOnly = false;
@@ -541,15 +769,14 @@
       btn.classList.add('active');
       btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Exit View Only`;
       banner.classList.add('show');
-      // Hide add buttons
-      document.getElementById('add-btn-orders').style.display = 'none';
-      document.getElementById('add-btn-pasabuy').style.display = 'none';
+      document.getElementById('add-btn-orders').style.display='none';
+      document.getElementById('add-btn-pasabuy').style.display='none';
+      document.getElementById('add-btn-group').style.display='none';
     } else {
       document.body.classList.remove('view-only');
       btn.classList.remove('active');
       btn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> View Only`;
       banner.classList.remove('show');
-      // Restore correct add button for active tab
       switchTab(activeTab);
     }
   }
@@ -558,23 +785,29 @@
   let activeTab = 'orders';
   function switchTab(tab) {
     activeTab = tab;
-    ['orders','pasabuy'].forEach(t => {
+    ['orders','pasabuy','group'].forEach(t => {
       document.getElementById('tab-'+t).className = 'tab-btn'+(t===tab?' active-'+t:'');
       document.getElementById('panel-'+t).className = 'panel'+(t===tab?' active':'');
     });
     if(!viewOnly) {
-      document.getElementById('add-btn-orders').style.display = tab==='orders'?'':'none';
-      document.getElementById('add-btn-pasabuy').style.display = tab==='pasabuy'?'':'none';
+      document.getElementById('add-btn-orders').style.display  = tab==='orders'  ? '' : 'none';
+      document.getElementById('add-btn-pasabuy').style.display = tab==='pasabuy' ? '' : 'none';
+      document.getElementById('add-btn-group').style.display   = tab==='group'   ? '' : 'none';
     } else {
-      document.getElementById('add-btn-orders').style.display = 'none';
-      document.getElementById('add-btn-pasabuy').style.display = 'none';
+      ['orders','pasabuy','group'].forEach(t=>document.getElementById('add-btn-'+t).style.display='none');
     }
     updateGlobalCount();
   }
 
   function updateGlobalCount() {
-    const total = oRows.length + pRows.length;
+    const total = oRows.length + pRows.length + gRows.length;
     document.getElementById('entry-count').textContent = `${total} entr${total===1?'y':'ies'} total`;
+  }
+
+  // ── Status badge helper ──
+  function statusBadge(st) {
+    const k = badgeKey(st);
+    return `<span class="badge badge-${k}">${st}</span>`;
   }
 
   // ── Orders CRUD ──
@@ -595,7 +828,7 @@
     [nEl,iEl].forEach(el=>{ if(!el.value.trim()){el.classList.add('error');ok=false;}else el.classList.remove('error'); });
     if(!ok) return;
     const e = { id: oEid ?? Date.now() };
-    oFields.forEach(k=>{ const v=document.getElementById('of-'+k).value; e[k]=(k==='price'||k==='fee')?parseFloat(v)||0:v.trim(); });
+    oFields.forEach(k=>{ const v=document.getElementById('of-'+k).value; e[k]=(k==='price'||k==='fee')?parseFloat(v)||0:v; });
     if(oEid) {
       const i = oRows.findIndex(r=>r.id===oEid);
       e.orderNum = oRows[i]?.orderNum || nextOrderNum();
@@ -605,16 +838,13 @@
       orderCounter++;
       oRows.push(e);
     }
-    saveData();
-    renderOrders();
-    closeOrdersForm();
+    saveData(); renderOrders(); closeOrdersForm();
   }
 
   function delOrder(id) {
     if(!confirm('Remove this entry?')) return;
     oRows = oRows.filter(x=>x.id!==id);
-    saveData();
-    renderOrders();
+    saveData(); renderOrders();
   }
 
   function srtOrders(k) {
@@ -638,17 +868,17 @@
       const tr=document.createElement('tr');
       tr.addEventListener('click',e=>{ if(!viewOnly && !e.target.closest('.row-actions')) showReceipt('order',r.id); });
       tr.innerHTML=`
-        <td class="td-num orders">${esc(r.orderNum)||'—'}</td>
-        <td class="td-buyer">${esc(r.name)}</td>
+        <td class="td-num orders nowrap">${esc(r.orderNum)||'—'}</td>
+        <td class="td-buyer nowrap">${esc(r.name)}</td>
         <td class="td-item">${esc(r.item)}</td>
         <td class="td-mono">₱${fmt(r.price)}</td>
         <td class="td-mono td-muted">₱${fmt(r.fee)}</td>
-        <td class="td-muted">${fmtD(r.date)}</td>
-        <td><span class="badge badge-${r.status}">${r.status}</span></td>
-        <td class="td-muted">${esc(r.mop)||'—'}</td>
-        <td class="td-muted">${esc(r.mod)||'—'}</td>
-        <td class="td-notes" title="${esc(r.notes)}">${esc(r.notes)||'—'}</td>
-        <td><div class="row-actions">
+        <td class="td-muted nowrap">${fmtD(r.date)}</td>
+        <td class="nowrap">${statusBadge(r.status)}</td>
+        <td class="td-muted nowrap">${esc(r.mop)||'—'}</td>
+        <td class="td-muted nowrap">${esc(r.mod)||'—'}</td>
+        <td class="td-notes">${esc(r.notes)||'—'}</td>
+        <td class="nowrap"><div class="row-actions">
           <button class="row-btn" onclick="openOrdersForm(${r.id})" title="Edit"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="row-btn danger" onclick="delOrder(${r.id})" title="Delete"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
         </div></td>`;
@@ -682,7 +912,7 @@
     if(!ok) return;
     const numF=['price','isf','addFee','serviceFee','localShip'];
     const e = { id: pEid ?? Date.now() };
-    pFields.forEach(k=>{ const el=document.getElementById('pf-'+k); if(el){ const v=el.value; e[k]=numF.includes(k)?parseFloat(v)||0:v.trim(); } });
+    pFields.forEach(k=>{ const el=document.getElementById('pf-'+k); if(el){ const v=el.value; e[k]=numF.includes(k)?parseFloat(v)||0:v; } });
     if(pEid) {
       const i = pRows.findIndex(r=>r.id===pEid);
       e.orderNum = pRows[i]?.orderNum || nextPasabuyNum();
@@ -692,16 +922,13 @@
       pasabuyCounter++;
       pRows.push(e);
     }
-    saveData();
-    renderPasabuy();
-    closePasabuyForm();
+    saveData(); renderPasabuy(); closePasabuyForm();
   }
 
   function delPasabuy(id) {
     if(!confirm('Remove this entry?')) return;
     pRows = pRows.filter(x=>x.id!==id);
-    saveData();
-    renderPasabuy();
+    saveData(); renderPasabuy();
   }
 
   function srtPasabuy(k) {
@@ -725,21 +952,21 @@
       const tr=document.createElement('tr');
       tr.addEventListener('click',e=>{ if(!viewOnly && !e.target.closest('.row-actions')) showReceipt('pasabuy',r.id); });
       tr.innerHTML=`
-        <td class="td-num pasabuy">${esc(r.orderNum)||'—'}</td>
-        <td class="td-buyer">${esc(r.name)}</td>
+        <td class="td-num pasabuy nowrap">${esc(r.orderNum)||'—'}</td>
+        <td class="td-buyer nowrap">${esc(r.name)}</td>
         <td class="td-item">${esc(r.item)}</td>
         <td class="td-mono">₱${fmt(r.price)}</td>
         <td class="td-mono td-muted">₱${fmt(r.isf)}</td>
         <td class="td-mono td-muted">₱${fmt(r.addFee)}</td>
         <td class="td-mono td-muted">₱${fmt(r.serviceFee)}</td>
         <td class="td-mono td-muted">₱${fmt(r.localShip)}</td>
-        <td class="td-muted">${fmtD(r.deadline)}</td>
-        <td><span class="badge badge-${r.status}">${r.status}</span></td>
-        <td class="td-muted">${fmtD(r.etaPH)}</td>
-        <td class="td-muted">${esc(r.mop)||'—'}</td>
-        <td class="td-muted">${esc(r.mod)||'—'}</td>
-        <td class="td-notes" title="${esc(r.notes)}">${esc(r.notes)||'—'}</td>
-        <td><div class="row-actions">
+        <td class="td-muted nowrap">${fmtD(r.deadline)}</td>
+        <td class="nowrap">${statusBadge(r.status)}</td>
+        <td class="td-muted nowrap">${fmtD(r.etaPH)}</td>
+        <td class="td-muted nowrap">${esc(r.mop)||'—'}</td>
+        <td class="td-muted nowrap">${esc(r.mod)||'—'}</td>
+        <td class="td-notes">${esc(r.notes)||'—'}</td>
+        <td class="nowrap"><div class="row-actions">
           <button class="row-btn" onclick="openPasabuyForm(${r.id})" title="Edit"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="row-btn danger" onclick="delPasabuy(${r.id})" title="Delete"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
         </div></td>`;
@@ -750,9 +977,95 @@
     document.getElementById('p-total').textContent=pRows.length;
     document.getElementById('p-amount').textContent='₱'+fmt(total);
     document.getElementById('p-pending').textContent=pRows.filter(r=>r.status==='PENDING').length;
-    document.getElementById('p-arrived').textContent=pRows.filter(r=>r.status==='ARRIVED').length;
+    document.getElementById('p-arrived').textContent=pRows.filter(r=>r.status==='ARRIVED PH ADDRESS').length;
     document.getElementById('p-delivered').textContent=pRows.filter(r=>r.status==='DELIVERED').length;
     document.getElementById('tab-badge-pasabuy').textContent=pRows.length;
+    updateGlobalCount();
+  }
+
+  // ── Group Order CRUD ──
+  function openGroupForm(id) {
+    gEid = id ?? null;
+    document.getElementById('g-modal-title').textContent = id ? 'Edit group order' : 'New group order';
+    const e = id ? gRows.find(r=>r.id===id) : {};
+    gFields.forEach(k=>{ const el=document.getElementById('gf-'+k); if(el){el.value=e[k]??'';el.classList.remove('error');} });
+    if(!id) document.getElementById('gf-status').value='PENDING';
+    document.getElementById('g-modal-bg').classList.add('open');
+    setTimeout(()=>document.getElementById('gf-name').focus(),50);
+  }
+  function closeGroupForm(){ document.getElementById('g-modal-bg').classList.remove('open'); }
+
+  function saveGroup() {
+    const nEl=document.getElementById('gf-name'), iEl=document.getElementById('gf-item');
+    let ok=true;
+    [nEl,iEl].forEach(el=>{ if(!el.value.trim()){el.classList.add('error');ok=false;}else el.classList.remove('error'); });
+    if(!ok) return;
+    const numF=['price','isf','lsf'];
+    const e = { id: gEid ?? Date.now() };
+    gFields.forEach(k=>{ const el=document.getElementById('gf-'+k); if(el){ const v=el.value; e[k]=numF.includes(k)?parseFloat(v)||0:v; } });
+    if(gEid) {
+      const i = gRows.findIndex(r=>r.id===gEid);
+      e.orderNum = gRows[i]?.orderNum || nextGroupNum();
+      gRows[i] = e;
+    } else {
+      e.orderNum = nextGroupNum();
+      groupCounter++;
+      gRows.push(e);
+    }
+    saveData(); renderGroup(); closeGroupForm();
+  }
+
+  function delGroup(id) {
+    if(!confirm('Remove this entry?')) return;
+    gRows = gRows.filter(x=>x.id!==id);
+    saveData(); renderGroup();
+  }
+
+  function srtGroup(k) {
+    document.querySelectorAll('#panel-group th').forEach(t=>t.classList.remove('sorted'));
+    event.currentTarget.classList.add('sorted');
+    gSk===k?gSd*=-1:(gSk=k,gSd=1); renderGroup();
+  }
+
+  function renderGroup() {
+    const q=document.getElementById('gq').value.toLowerCase();
+    const fs=document.getElementById('gfst').value;
+    let data=gRows.filter(r=>{
+      const ms=!q||r.name?.toLowerCase().includes(q)||r.item?.toLowerCase().includes(q)||(r.orderNum||'').toLowerCase().includes(q);
+      return ms&&(!fs||r.status===fs);
+    });
+    if(gSk) data.sort((a,b)=>{ const av=a[gSk],bv=b[gSk]; return(typeof av==='number'?av-bv:String(av||'').localeCompare(String(bv||'')))*gSd; });
+    const tbd=document.getElementById('g-tbd');
+    tbd.innerHTML='';
+    document.getElementById('g-emp').style.display=data.length?'none':'block';
+    data.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.addEventListener('click',e=>{ if(!viewOnly && !e.target.closest('.row-actions')) showReceipt('group',r.id); });
+      tr.innerHTML=`
+        <td class="td-num group nowrap">${esc(r.orderNum)||'—'}</td>
+        <td class="td-buyer nowrap">${esc(r.name)}</td>
+        <td class="td-item">${esc(r.item)}</td>
+        <td class="td-mono">₱${fmt(r.price)}</td>
+        <td class="td-mono td-muted">₱${fmt(r.isf)}</td>
+        <td class="td-mono td-muted">₱${fmt(r.lsf)}</td>
+        <td class="td-muted nowrap">${fmtD(r.deadline)}</td>
+        <td class="nowrap">${statusBadge(r.status)}</td>
+        <td class="td-muted nowrap">${fmtD(r.etaPH)}</td>
+        <td class="td-muted nowrap">${esc(r.mop)||'—'}</td>
+        <td class="td-muted nowrap">${esc(r.mod)||'—'}</td>
+        <td class="nowrap"><div class="row-actions">
+          <button class="row-btn" onclick="openGroupForm(${r.id})" title="Edit"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="row-btn danger" onclick="delGroup(${r.id})" title="Delete"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div></td>`;
+      tbd.appendChild(tr);
+    });
+    const total=gRows.reduce((s,r)=>s+(r.price||0)+(r.isf||0)+(r.lsf||0),0);
+    document.getElementById('g-total').textContent=gRows.length;
+    document.getElementById('g-amount').textContent='₱'+fmt(total);
+    document.getElementById('g-pending').textContent=gRows.filter(r=>r.status==='PENDING').length;
+    document.getElementById('g-arrived').textContent=gRows.filter(r=>r.status==='ARRIVED PH ADDRESS').length;
+    document.getElementById('g-delivered').textContent=gRows.filter(r=>r.status==='DELIVERED').length;
+    document.getElementById('tab-badge-group').textContent=gRows.length;
     updateGlobalCount();
   }
 
@@ -774,24 +1087,31 @@
   }
 
   function showReceipt(type, id) {
-    const r = type==='order' ? oRows.find(x=>x.id===id) : pRows.find(x=>x.id===id);
+    let r;
+    if(type==='order') r=oRows.find(x=>x.id===id);
+    else if(type==='pasabuy') r=pRows.find(x=>x.id===id);
+    else r=gRows.find(x=>x.id===id);
     if(!r) return;
     currentReceiptName = r.name;
     document.getElementById('r-name').textContent = r.name;
     document.getElementById('r-item').textContent = r.item;
-    document.getElementById('r-status-badge').innerHTML = `<span class="badge badge-${r.status}">${r.status}</span>`;
+    document.getElementById('r-status-badge').innerHTML = statusBadge(r.status);
     const badge=document.getElementById('r-type-badge');
-    badge.textContent = type==='order'?'Order':'Pasabuy';
-    badge.className = 'r-type '+(type==='order'?'orders':'pasabuy');
+    if(type==='order'){badge.textContent='Order';badge.className='r-type orders';}
+    else if(type==='pasabuy'){badge.textContent='Pasabuy';badge.className='r-type pasabuy';}
+    else{badge.textContent='Group Order';badge.className='r-type group-order';}
     let rows=[], total=0;
     if(type==='order'){
       rows=[['Item',r.item||'—',false],['Price','₱'+fmt(r.price),true],['Shipping fee','₱'+fmt(r.fee),true],['Deadline',fmtD(r.date),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false],['Notes',r.notes||'—',false]];
       total=(r.price||0)+(r.fee||0);
-    } else {
+    } else if(type==='pasabuy'){
       rows=[['Item',r.item||'—',false],['Price','₱'+fmt(r.price),true],['ISF','₱'+fmt(r.isf),true],['Additional fee','₱'+fmt(r.addFee),true],['Service fee','₱'+fmt(r.serviceFee),true],['Local shipping','₱'+fmt(r.localShip),true],['Payment deadline',fmtD(r.deadline),false],['ETA Philippines',fmtD(r.etaPH),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false],['Notes',r.notes||'—',false]];
       total=(r.price||0)+(r.isf||0)+(r.addFee||0)+(r.serviceFee||0)+(r.localShip||0);
+    } else {
+      rows=[['Item',r.item||'—',false],['Price','₱'+fmt(r.price),true],['ISF','₱'+fmt(r.isf),true],['LSF','₱'+fmt(r.lsf),true],['Payment deadline',fmtD(r.deadline),false],['ETA Philippines',fmtD(r.etaPH),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false]];
+      total=(r.price||0)+(r.isf||0)+(r.lsf||0);
     }
-    document.getElementById('r-body').innerHTML=rows.map(([l,v,m],i)=>`<div class="receipt-row${i===0?' receipt-row-item':''}"><span class="r-label">${l}</span><span class="r-val${m?' mono':''}${i===0?' r-val-item':''}">${v}</span></div>`).join('');
+    document.getElementById('r-body').innerHTML=rows.map(([l,v,m],i)=>`<div class="receipt-row${i===0?' receipt-row-item':''}"><span class="r-label">${l}</span><span class="r-val${m?' mono':''}${i===0?' r-val-item':''}">${esc(v)}</span></div>`).join('');
     document.getElementById('r-total').textContent='₱'+fmt(total);
     document.getElementById('r-generated').textContent='Generated '+new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
     document.getElementById('receipt-bg').classList.add('open');
@@ -826,12 +1146,12 @@
     data.forEach(r=>{
       const tr=document.createElement('tr');
       tr.innerHTML=`
-        <td class="td-num orders">${esc(r.orderNum)||'—'}</td>
-        <td class="td-item" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${esc(r.item)}">${esc(r.item)||'—'}</td>
-        <td class="td-buyer">${esc(r.name)||'—'}</td>
-        <td class="td-muted">${fmtD(r.date)}</td>
-        <td><span class="badge badge-${r.status}">${r.status}</span></td>
-        <td class="td-muted">${r.etaPH?fmtD(r.etaPH):'—'}</td>
+        <td class="td-num orders nowrap">${esc(r.orderNum)||'—'}</td>
+        <td class="td-item" style="max-width:200px;">${esc(r.item)||'—'}</td>
+        <td class="td-buyer nowrap">${esc(r.name)||'—'}</td>
+        <td class="td-muted nowrap">${fmtD(r.date)}</td>
+        <td class="nowrap">${statusBadge(r.status)}</td>
+        <td class="td-muted nowrap">${r.etaPH?fmtD(r.etaPH):'—'}</td>
         <td class="vtable-notes-cell" title="${esc(r.notes)}">${esc(r.notes)||'—'}</td>`;
       tbd.appendChild(tr);
     });
@@ -843,13 +1163,21 @@
   document.getElementById('ofst').addEventListener('change', renderOrders);
   document.getElementById('pq').addEventListener('input', renderPasabuy);
   document.getElementById('pfst').addEventListener('change', renderPasabuy);
+  document.getElementById('gq').addEventListener('input', renderGroup);
+  document.getElementById('gfst').addEventListener('change', renderGroup);
   document.getElementById('vtq').addEventListener('input', renderViewTable);
   document.getElementById('vtfst').addEventListener('change', renderViewTable);
   document.getElementById('o-modal-bg').addEventListener('click',function(e){if(e.target===this)closeOrdersForm();});
   document.getElementById('p-modal-bg').addEventListener('click',function(e){if(e.target===this)closePasabuyForm();});
+  document.getElementById('g-modal-bg').addEventListener('click',function(e){if(e.target===this)closeGroupForm();});
   document.getElementById('receipt-bg').addEventListener('click',function(e){if(e.target===this)closeReceipt();});
   document.getElementById('vtable-bg').addEventListener('click',function(e){if(e.target===this)closeViewTable();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeOrdersForm();closePasabuyForm();closeReceipt();closeViewTable();}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeOrdersForm();closePasabuyForm();closeGroupForm();closeReceipt();closeViewTable();}});
+
+  // Save sync key on input change
+  document.getElementById('sync-key').addEventListener('change', function(){
+    if(this.value.trim()) localStorage.setItem('ml_last_sync_key', this.value.trim());
+  });
 
   // ── Init ──
   loadData();

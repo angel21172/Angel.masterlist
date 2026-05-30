@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Tracker — View</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fde8ee;
+      --surface: #fff5f8;
+      --surface2: #fad5e0;
+      --border: #f5b8cb;
+      --border2: #eda3bb;
+      --text: #3a1a24;
+      --text2: #7a4a5a;
+      --text3: #b07a8a;
+      --accent: #c0395a;
+      --accent-pasabuy: #7c3aed;
+      --radius: 10px;
+      --radius-lg: 14px;
+      --font: 'DM Sans', sans-serif;
+      --mono: 'DM Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem; gap: 12px; flex-wrap: wrap;
+    }
+    .header-left h1 { font-size: 22px; font-weight: 600; letter-spacing: -.3px; }
+    .header-left p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+    .view-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 11px; font-weight: 600; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .refresh-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); padding: 7px 14px;
+      font-size: 12px; font-weight: 500; font-family: var(--font);
+      color: var(--text2); cursor: pointer; transition: background .15s;
+    }
+    .refresh-btn:hover { background: var(--surface2); }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .tab-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; font-size: 13px; font-weight: 500;
+      font-family: var(--font); border: none; background: none;
+      color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; border-radius: var(--radius) var(--radius) 0 0;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--surface2); }
+    .tab-btn.active-orders { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn.active-pasabuy { color: var(--accent-pasabuy); border-bottom-color: var(--accent-pasabuy); }
+    .tab-badge {
+      font-size: 10px; font-weight: 600; padding: 1px 6px;
+      border-radius: 20px; background: var(--surface2); color: var(--text2);
+    }
+    .tab-btn.active-orders .tab-badge { background: #1a1917; color: #fff; }
+    .tab-btn.active-pasabuy .tab-badge { background: var(--accent-pasabuy); color: #fff; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Stats */
+    .stats { display: grid; gap: 10px; margin-bottom: 1.5rem; }
+    .stats.orders-stats { grid-template-columns: repeat(3, 1fr); }
+    .stats.pasabuy-stats { grid-template-columns: repeat(3, 1fr); }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+    .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .stat-value { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
+
+    /* Toolbar */
+    .toolbar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+    .search-wrap { position: relative; flex: 1; min-width: 180px; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+    .search-input {
+      width: 100%; padding: 8px 10px 8px 34px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); font-family: var(--font); font-size: 13px;
+      color: var(--text); outline: none; transition: border-color .15s;
+    }
+    .search-input:focus { border-color: var(--border2); }
+    .filter-select {
+      padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); font-family: var(--font); font-size: 13px;
+      color: var(--text); outline: none; cursor: pointer; min-width: 140px;
+    }
+
+    /* Table */
+    .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--surface2); }
+    th {
+      padding: 10px 14px; text-align: left;
+      font-size: 11px; font-weight: 500; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap; cursor: pointer; user-select: none;
+    }
+    th:hover { color: var(--text); }
+    th .sort-icon { opacity: .4; margin-left: 3px; }
+    th.sorted .sort-icon { opacity: 1; }
+    td {
+      padding: 11px 14px; border-bottom: 1px solid var(--border);
+      color: var(--text); vertical-align: middle;
+      white-space: nowrap; max-width: 180px;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fce8f0; }
+    .td-num { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+    .td-num.orders { color: var(--accent); }
+    .td-num.pasabuy { color: var(--accent-pasabuy); }
+    .td-buyer { font-weight: 500; }
+    .td-item { color: var(--text2); }
+    .td-muted { color: var(--text2); font-size: 12px; }
+
+    /* Badges */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 500;
+      padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+    }
+    .badge-RESERVED   { background: #dbeafe; color: #1e40af; }
+    .badge-SHIPMENT   { background: #ede9fe; color: #5b21b6; }
+    .badge-DELIVERED  { background: #dcfce7; color: #166534; }
+    .badge-CANCELLED  { background: #fee2e2; color: #991b1b; }
+    .badge-PENDING    { background: #f3f4f6; color: #374151; }
+    .badge-PROCESSING { background: #ffedd5; color: #9a3412; }
+    .badge-ARRIVED    { background: #cffafe; color: #155e75; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text3); }
+    .empty-state svg { margin: 0 auto 12px; display: block; opacity: .35; }
+    .empty-state p { font-size: 13px; }
+    .empty-state strong { color: var(--text2); }
+
+    /* No data notice */
+    .no-data-notice {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 2rem;
+      text-align: center; color: var(--text2); font-size: 13px;
+      margin-bottom: 1.5rem;
+    }
+    .no-data-notice a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .no-data-notice a:hover { text-decoration: underline; }
+
+    /* Last updated */
+    .last-updated { font-size: 11px; color: var(--text3); text-align: right; margin-bottom: .5rem; }
+
+    @media (max-width: 700px) {
+      .stats.orders-stats,
+      .stats.pasabuy-stats { grid-template-columns: 1fr 1fr; }
+      .header { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Order Tracker</h1>
+      <p id="entry-count">Loading…</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <span class="view-badge">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        View only
+      </span>
+      <button class="refresh-btn" onclick="loadAndRender()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div id="no-data-notice" class="no-data-notice" style="display:none;">
+    No data found. Make sure you've added entries in the
+    <a href="index.html">Masterlist</a> first — both pages must be on the same domain.
+  </div>
+
+  <div id="main-content">
+    <div class="tabs">
+      <button class="tab-btn active-orders" id="tab-orders" onclick="switchTab('orders')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+        Orders
+        <span class="tab-badge" id="tab-badge-orders">0</span>
+      </button>
+      <button class="tab-btn" id="tab-pasabuy" onclick="switchTab('pasabuy')">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg>
+        Pasabuy
+        <span class="tab-badge" id="tab-badge-pasabuy">0</span>
+      </button>
+    </div>
+
+    <!-- ORDERS PANEL -->
+    <div class="panel active" id="panel-orders">
+      <div class="stats orders-stats">
+        <div class="stat"><div class="stat-label">Total orders</div><div class="stat-value" id="o-total">0</div></div>
+        <div class="stat"><div class="stat-label">Reserved</div><div class="stat-value" id="o-reserved">0</div></div>
+        <div class="stat"><div class="stat-label">Delivered</div><div class="stat-value" id="o-delivered">0</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="oq" type="text" placeholder="Search order # or buyer…">
+        </div>
+        <select class="filter-select" id="ofst">
+          <option value="">All statuses</option>
+          <option>RESERVED</option><option>SHIPMENT</option><option>DELIVERED</option>
+          <option>CANCELLED</option><option>PENDING</option>
+        </select>
+      </div>
+      <div class="last-updated" id="o-updated"></div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th onclick="srt('o','orderNum')">Order # <span class="sort-icon">↕</span></th>
+              <th onclick="srt('o','name')">Buyer <span class="sort-icon">↕</span></th>
+              <th onclick="srt('o','item')">Item / Product <span class="sort-icon">↕</span></th>
+              <th onclick="srt('o','date')">Payment Deadline <span class="sort-icon">↕</span></th>
+              <th onclick="srt('o','status')">Status <span class="sort-icon">↕</span></th>
+            </tr></thead>
+            <tbody id="o-tbd"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="o-emp">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+          <p>No orders found.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASABUY PANEL -->
+    <div class="panel" id="panel-pasabuy">
+      <div class="stats pasabuy-stats">
+        <div class="stat"><div class="stat-label">Total pasabuy</div><div class="stat-value" id="p-total">0</div></div>
+        <div class="stat"><div class="stat-label">Pending</div><div class="stat-value" id="p-pending">0</div></div>
+        <div class="stat"><div class="stat-label">Delivered</div><div class="stat-value" id="p-delivered">0</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="pq" type="text" placeholder="Search order # or buyer…">
+        </div>
+        <select class="filter-select" id="pfst">
+          <option value="">All statuses</option>
+          <option>PENDING</option><option>PROCESSING</option><option>SHIPMENT</option>
+          <option>ARRIVED</option><option>DELIVERED</option><option>CANCELLED</option>
+        </select>
+      </div>
+      <div class="last-updated" id="p-updated"></div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th onclick="srt('p','orderNum')">Order # <span class="sort-icon">↕</span></th>
+              <th onclick="srt('p','name')">Buyer <span class="sort-icon">↕</span></th>
+              <th onclick="srt('p','item')">Item / Product <span class="sort-icon">↕</span></th>
+              <th onclick="srt('p','deadline')">Payment Deadline <span class="sort-icon">↕</span></th>
+              <th onclick="srt('p','status')">Status <span class="sort-icon">↕</span></th>
+              <th onclick="srt('p','etaPH')">ETA PH <span class="sort-icon">↕</span></th>
+            </tr></thead>
+            <tbody id="p-tbd"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="p-emp">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg>
+          <p>No pasabuy entries found.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const fmtD = s => { if(!s) return '—'; const d=new Date(s+'T00:00'); return d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}); };
+  function esc(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  let oRows=[], pRows=[];
+  let oSk=null, oSd=1, pSk=null, pSd=1;
+
+  function loadAndRender() {
+    try {
+      const o = localStorage.getItem('masterlist_orders');
+      const p = localStorage.getItem('masterlist_pasabuy');
+      oRows = o ? JSON.parse(o) : [];
+      pRows = p ? JSON.parse(p) : [];
+    } catch(e) { oRows=[]; pRows=[]; }
+
+    const hasData = oRows.length > 0 || pRows.length > 0;
+    document.getElementById('no-data-notice').style.display = hasData ? 'none' : 'block';
+
+    const now = new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('o-updated').textContent = `Last refreshed: ${now}`;
+    document.getElementById('p-updated').textContent = `Last refreshed: ${now}`;
+
+    renderOrders();
+    renderPasabuy();
+    updateCount();
+  }
+
+  function updateCount() {
+    const total = oRows.length + pRows.length;
+    document.getElementById('entry-count').textContent = `${total} entr${total===1?'y':'ies'} total`;
+  }
+
+  function srt(tab, k) {
+    if(tab==='o'){
+      document.querySelectorAll('#panel-orders th').forEach(t=>t.classList.remove('sorted'));
+      event.currentTarget.classList.add('sorted');
+      oSk===k?oSd*=-1:(oSk=k,oSd=1);
+      renderOrders();
+    } else {
+      document.querySelectorAll('#panel-pasabuy th').forEach(t=>t.classList.remove('sorted'));
+      event.currentTarget.classList.add('sorted');
+      pSk===k?pSd*=-1:(pSk=k,pSd=1);
+      renderPasabuy();
+    }
+  }
+
+  function renderOrders() {
+    const q = document.getElementById('oq').value.toLowerCase();
+    const fs = document.getElementById('ofst').value;
+    let data = oRows.filter(r=>{
+      const ms = !q || (r.name||'').toLowerCase().includes(q) || (r.orderNum||'').toLowerCase().includes(q) || (r.item||'').toLowerCase().includes(q);
+      return ms && (!fs || r.status===fs);
+    });
+    if(oSk) data.sort((a,b)=>{ const av=a[oSk],bv=b[oSk]; return(typeof av==='number'?av-bv:String(av||'').localeCompare(String(bv||'')))*oSd; });
+
+    const tbd = document.getElementById('o-tbd');
+    tbd.innerHTML = '';
+    document.getElementById('o-emp').style.display = data.length ? 'none' : 'block';
+
+    data.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="td-num orders">${esc(r.orderNum)||'—'}</td>
+        <td class="td-buyer">${esc(r.name)}</td>
+        <td class="td-item">${esc(r.item)}</td>
+        <td class="td-muted">${fmtD(r.date)}</td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>`;
+      tbd.appendChild(tr);
+    });
+
+    document.getElementById('o-total').textContent = oRows.length;
+    document.getElementById('o-reserved').textContent = oRows.filter(r=>r.status==='RESERVED').length;
+    document.getElementById('o-delivered').textContent = oRows.filter(r=>r.status==='DELIVERED').length;
+    document.getElementById('tab-badge-orders').textContent = oRows.length;
+  }
+
+  function renderPasabuy() {
+    const q = document.getElementById('pq').value.toLowerCase();
+    const fs = document.getElementById('pfst').value;
+    let data = pRows.filter(r=>{
+      const ms = !q || (r.name||'').toLowerCase().includes(q) || (r.orderNum||'').toLowerCase().includes(q) || (r.item||'').toLowerCase().includes(q);
+      return ms && (!fs || r.status===fs);
+    });
+    if(pSk) data.sort((a,b)=>{ const av=a[pSk],bv=b[pSk]; return(typeof av==='number'?av-bv:String(av||'').localeCompare(String(bv||'')))*pSd; });
+
+    const tbd = document.getElementById('p-tbd');
+    tbd.innerHTML = '';
+    document.getElementById('p-emp').style.display = data.length ? 'none' : 'block';
+
+    data.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="td-num pasabuy">${esc(r.orderNum)||'—'}</td>
+        <td class="td-buyer">${esc(r.name)}</td>
+        <td class="td-item">${esc(r.item)}</td>
+        <td class="td-muted">${fmtD(r.deadline)}</td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>
+        <td class="td-muted">${fmtD(r.etaPH)}</td>`;
+      tbd.appendChild(tr);
+    });
+
+    document.getElementById('p-total').textContent = pRows.length;
+    document.getElementById('p-pending').textContent = pRows.filter(r=>r.status==='PENDING').length;
+    document.getElementById('p-delivered').textContent = pRows.filter(r=>r.status==='DELIVERED').length;
+    document.getElementById('tab-badge-pasabuy').textContent = pRows.length;
+  }
+
+  let activeTab = 'orders';
+  function switchTab(tab) {
+    activeTab = tab;
+    ['orders','pasabuy'].forEach(t=>{
+      document.getElementById('tab-'+t).className = 'tab-btn'+(t===tab?' active-'+t:'');
+      document.getElementById('panel-'+t).className = 'panel'+(t===tab?' active':'');
+    });
+  }
+
+  document.getElementById('oq').addEventListener('input', renderOrders);
+  document.getElementById('ofst').addEventListener('change', renderOrders);
+  document.getElementById('pq').addEventListener('input', renderPasabuy);
+  document.getElementById('pfst').addEventListener('change', renderPasabuy);
+
+  // Auto-refresh every 30 seconds
+  loadAndRender();
+  setInterval(loadAndRender, 30000);
+</script>
+</body>
+</html>

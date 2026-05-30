@@ -167,9 +167,12 @@
     .receipt-top .r-type.orders { background: #1a1917; color: #fff; }
     .receipt-top .r-type.pasabuy { background: #7c3aed; color: #fff; }
     .receipt-top .r-type.group-order { background: #0e7490; color: #fff; }
-    .receipt-top .r-name { font-size: 20px; font-weight: 600; color: #3a1a24; margin-bottom: 2px; }
-    .receipt-top .r-item { font-size: 13px; color: #7a4a5a; white-space: pre-line; text-align: center; }
-    .receipt-top .r-status { margin-top: 10px; }
+    .receipt-top .r-ordernum { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600; color: #b07a8a; letter-spacing: .06em; margin-bottom: 4px; }
+    .receipt-top .r-name { font-size: 20px; font-weight: 600; color: #3a1a24; margin-bottom: 4px; }
+    .receipt-top .r-status { margin-top: 8px; }
+    .r-item-block { margin-top: 12px; background: #fdf2f5; border-radius: 8px; padding: 10px 14px; text-align: left; }
+    .r-item-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #c0395a; margin-bottom: 5px; }
+    .receipt-top .r-item { font-size: 13px; color: #3a1a24; font-weight: 500; white-space: pre-line; text-align: left; line-height: 1.6; }
     .receipt-body { padding: 1rem 1.5rem; }
     .receipt-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #f3f4f6; gap: 12px; }
     .receipt-row:last-child { border-bottom: none; }
@@ -605,9 +608,13 @@
     <div class="receipt-top">
       <div class="r-logo">Masterlist</div>
       <div id="r-type-badge" class="r-type orders">Order</div>
+      <div class="r-ordernum" id="r-ordernum"></div>
       <div class="r-name" id="r-name"></div>
-      <div class="r-item" id="r-item"></div>
       <div class="r-status" id="r-status-badge"></div>
+      <div class="r-item-block">
+        <div class="r-item-label">Item</div>
+        <div class="r-item" id="r-item"></div>
+      </div>
     </div>
     <div class="receipt-body" id="r-body"></div>
     <hr class="receipt-divider">
@@ -1093,8 +1100,9 @@
     else r=gRows.find(x=>x.id===id);
     if(!r) return;
     currentReceiptName = r.name;
+    document.getElementById('r-ordernum').textContent = r.orderNum || '';
     document.getElementById('r-name').textContent = r.name;
-    document.getElementById('r-item').textContent = r.item;
+    document.getElementById('r-item').textContent = r.item || '—';
     document.getElementById('r-status-badge').innerHTML = statusBadge(r.status);
     const badge=document.getElementById('r-type-badge');
     if(type==='order'){badge.textContent='Order';badge.className='r-type orders';}
@@ -1102,16 +1110,16 @@
     else{badge.textContent='Group Order';badge.className='r-type group-order';}
     let rows=[], total=0;
     if(type==='order'){
-      rows=[['Item',r.item||'—',false],['Price','₱'+fmt(r.price),true],['Shipping fee','₱'+fmt(r.fee),true],['Deadline',fmtD(r.date),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false],['Notes',r.notes||'—',false]];
+      rows=[['Price','₱'+fmt(r.price),true],['Shipping fee','₱'+fmt(r.fee),true],['Deadline',fmtD(r.date),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false],['Notes',r.notes||'—',false]];
       total=(r.price||0)+(r.fee||0);
     } else if(type==='pasabuy'){
-      rows=[['Item',r.item||'—',false],['Price','₱'+fmt(r.price),true],['ISF','₱'+fmt(r.isf),true],['Additional fee','₱'+fmt(r.addFee),true],['Service fee','₱'+fmt(r.serviceFee),true],['Local shipping','₱'+fmt(r.localShip),true],['Payment deadline',fmtD(r.deadline),false],['ETA Philippines',fmtD(r.etaPH),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false],['Notes',r.notes||'—',false]];
+      rows=[['Price','₱'+fmt(r.price),true],['ISF','₱'+fmt(r.isf),true],['Additional fee','₱'+fmt(r.addFee),true],['Service fee','₱'+fmt(r.serviceFee),true],['Local shipping','₱'+fmt(r.localShip),true],['Payment deadline',fmtD(r.deadline),false],['ETA Philippines',fmtD(r.etaPH),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false],['Notes',r.notes||'—',false]];
       total=(r.price||0)+(r.isf||0)+(r.addFee||0)+(r.serviceFee||0)+(r.localShip||0);
     } else {
-      rows=[['Item',r.item||'—',false],['Price','₱'+fmt(r.price),true],['ISF','₱'+fmt(r.isf),true],['LSF','₱'+fmt(r.lsf),true],['Payment deadline',fmtD(r.deadline),false],['ETA Philippines',fmtD(r.etaPH),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false]];
+      rows=[['Price','₱'+fmt(r.price),true],['ISF','₱'+fmt(r.isf),true],['LSF','₱'+fmt(r.lsf),true],['Payment deadline',fmtD(r.deadline),false],['ETA Philippines',fmtD(r.etaPH),false],['Mode of payment',r.mop||'—',false],['Mode of delivery',r.mod||'—',false]];
       total=(r.price||0)+(r.isf||0)+(r.lsf||0);
     }
-    document.getElementById('r-body').innerHTML=rows.map(([l,v,m],i)=>`<div class="receipt-row${i===0?' receipt-row-item':''}"><span class="r-label">${l}</span><span class="r-val${m?' mono':''}${i===0?' r-val-item':''}">${esc(v)}</span></div>`).join('');
+    document.getElementById('r-body').innerHTML=rows.map(([l,v,m])=>`<div class="receipt-row"><span class="r-label">${l}</span><span class="r-val${m?' mono':''}">${esc(v)}</span></div>`).join('');
     document.getElementById('r-total').textContent='₱'+fmt(total);
     document.getElementById('r-generated').textContent='Generated '+new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
     document.getElementById('receipt-bg').classList.add('open');

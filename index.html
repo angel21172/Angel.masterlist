@@ -105,11 +105,11 @@
     .badge-PENDING        { background: #f3f4f6; color: #374151; }
     .badge-PROCESSING     { background: #ffedd5; color: #9a3412; }
     .badge-ARRIVED        { background: #cffafe; color: #155e75; }
-    /* new status badges */
     .badge-ORDER_PLACED   { background: #e0f2fe; color: #0369a1; }
     .badge-SHIPPED        { background: #ede9fe; color: #5b21b6; }
     .badge-IN_TRANSIT     { background: #fef9c3; color: #854d0e; }
     .badge-ARRIVED_PH     { background: #cffafe; color: #155e75; }
+    .badge-ARRIVED_PH_ADDRESS { background: #cffafe; color: #155e75; }
     .badge-PH_PROCESSING  { background: #ffedd5; color: #9a3412; }
     .badge-PH_SHIPPED     { background: #ddd6fe; color: #4c1d95; }
     .badge-PH_IN_TRANSIT  { background: #fef3c7; color: #92400e; }
@@ -645,10 +645,7 @@
   const fmt  = n => Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
   const fmtD = s => { if(!s)return'—'; const d=new Date(s+'T00:00'); return d.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}); };
   function esc(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  // For display: preserve line breaks in text
-  function escNL(s){ if(!s)return''; return esc(s); }
 
-  // Badge key: space → underscore for CSS classes
   function badgeKey(st){ return (st||'').replace(/\s+/g,'_').toUpperCase(); }
 
   let oRows=[], pRows=[], gRows=[];
@@ -660,13 +657,7 @@
   const pFields=['name','item','price','isf','addFee','serviceFee','localShip','deadline','status','etaPH','mop','mod','notes'];
   const gFields=['name','item','price','isf','lsf','deadline','status','etaPH','mop','mod'];
 
-  // ── Cloud Sync via localStorage key-value store ──
-  // We store the data as a JSON blob keyed by the user's sync key in localStorage.
-  // For cross-device sync we use a free public JSON bin (jsonbin.io style) via the Anthropic API as relay.
-  // Since we can't use external APIs without auth, we use a clever trick:
-  // We store data in a shared "cloud" store using window.storage (persistent artifact storage).
-  // If not in artifact context, we fall back to a base64 export/import workflow.
-
+  // ── Cloud Sync ──
   function getSyncKey() { return document.getElementById('sync-key').value.trim(); }
 
   function setSyncStatus(msg, type='') {
@@ -682,12 +673,10 @@
     btn.disabled = true; btn.textContent = 'Saving…';
     try {
       const payload = JSON.stringify({ oRows, pRows, gRows, orderCounter, pasabuyCounter, groupCounter, savedAt: new Date().toISOString() });
-      // Try window.storage if available (artifact context)
       if(window.storage) {
         await window.storage.set('ml_sync_'+key, payload, true);
         setSyncStatus('✓ Saved to cloud at ' + new Date().toLocaleTimeString(), 'ok');
       } else {
-        // Fallback: save to localStorage with key prefix + copy to clipboard as export
         localStorage.setItem('ml_cloud_'+key, payload);
         setSyncStatus('✓ Saved locally. Share the key to sync manually.', 'ok');
       }
@@ -709,7 +698,6 @@
         if(result) payload = result.value;
       }
       if(!payload) {
-        // Fallback to localStorage
         payload = localStorage.getItem('ml_cloud_'+key);
       }
       if(!payload) {
@@ -826,6 +814,14 @@
     return `<span class="badge badge-${k}">${st}</span>`;
   }
 
+  // ── Item cell helper ──
+  function itemCell(item) {
+    const lines = (item||'').split('\n').map(l=>l.trim()).filter(l=>l);
+    if(!lines.length) return '—';
+    if(lines.length === 1) return esc(lines[0]);
+    return esc(lines[0]) + `<span style="color:var(--text3);font-size:11px;margin-left:5px;">+${lines.length-1} more</span>`;
+  }
+
   // ── Orders CRUD ──
   function openOrdersForm(id) {
     oEid = id ?? null;
@@ -869,14 +865,6 @@
     oSk===k?oSd*=-1:(oSk=k,oSd=1); renderOrders();
   }
 
-  // Helper: render item lines for table cell
-  function itemCell(item) {
-    const lines = (item||'').split('\n').map(l=>l.trim()).filter(l=>l);
-    if(!lines.length) return '—';
-    if(lines.length === 1) return esc(lines[0]);
-    return esc(lines[0]) + `<span style="color:var(--text3);font-size:11px;margin-left:5px;">+${lines.length-1} more</span>`;
-  }
-
   function renderOrders() {
     const q=document.getElementById('oq').value.toLowerCase();
     const fs=document.getElementById('ofst').value;
@@ -906,6 +894,7 @@
           <button class="row-btn" onclick="openOrdersForm(${r.id})" title="Edit"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="row-btn danger" onclick="delOrder(${r.id})" title="Delete"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
         </div></td>`;
+      tbd.appendChild(tr); /* ✅ FIX: was missing in original */
     });
     const total=oRows.reduce((s,r)=>s+(r.price||0)+(r.fee||0),0);
     document.getElementById('o-total').textContent=oRows.length;
@@ -977,7 +966,7 @@
       tr.innerHTML=`
         <td class="td-num pasabuy nowrap">${esc(r.orderNum)||'—'}</td>
         <td class="td-buyer nowrap">${esc(r.name)}</td>
-        <td class="td-item">${esc(r.item)}</td>
+        <td class="td-item">${itemCell(r.item)}</td>
         <td class="td-mono">₱${fmt(r.price)}</td>
         <td class="td-mono td-muted">₱${fmt(r.isf)}</td>
         <td class="td-mono td-muted">₱${fmt(r.addFee)}</td>
@@ -1067,7 +1056,7 @@
       tr.innerHTML=`
         <td class="td-num group nowrap">${esc(r.orderNum)||'—'}</td>
         <td class="td-buyer nowrap">${esc(r.name)}</td>
-        <td class="td-item">${esc(r.item)}</td>
+        <td class="td-item">${itemCell(r.item)}</td>
         <td class="td-mono">₱${fmt(r.price)}</td>
         <td class="td-mono td-muted">₱${fmt(r.isf)}</td>
         <td class="td-mono td-muted">₱${fmt(r.lsf)}</td>
@@ -1118,7 +1107,6 @@
     currentReceiptName = r.name;
     document.getElementById('r-ordernum').textContent = r.orderNum || '';
     document.getElementById('r-name').textContent = r.name;
-    // Render each line of item as its own row
     const itemLines = (r.item || '—').split('\n').map(l => l.trim()).filter(l => l);
     document.getElementById('r-item').innerHTML = itemLines.length
       ? itemLines.map(l => `<div class="r-item-line">${esc(l)}</div>`).join('')
@@ -1202,7 +1190,6 @@
   document.getElementById('vtable-bg').addEventListener('click',function(e){if(e.target===this)closeViewTable();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeOrdersForm();closePasabuyForm();closeGroupForm();closeReceipt();closeViewTable();}});
 
-  // Save sync key on input change
   document.getElementById('sync-key').addEventListener('change', function(){
     if(this.value.trim()) localStorage.setItem('ml_last_sync_key', this.value.trim());
   });

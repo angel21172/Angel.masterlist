@@ -171,7 +171,10 @@
     .receipt-top .r-name { font-size: 20px; font-weight: 600; color: #3a1a24; margin-bottom: 4px; }
     .receipt-top .r-status { margin-top: 8px; }
     .r-item-block { margin-top: 12px; background: #fdf2f5; border-radius: 8px; padding: 10px 14px; text-align: left; }
-    .r-item-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #c0395a; margin-bottom: 5px; }
+    .r-item-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #c0395a; margin-bottom: 8px; }
+    .r-item-line { font-size: 13px; color: #3a1a24; font-weight: 500; line-height: 1.6; padding: 4px 0; border-bottom: 1px solid #f5cdd8; }
+    .r-item-line:last-child { border-bottom: none; padding-bottom: 0; }
+    .r-item-line:first-child { padding-top: 0; }
     .receipt-top .r-item { font-size: 13px; color: #3a1a24; font-weight: 500; white-space: pre-line; text-align: left; line-height: 1.6; }
     .receipt-body { padding: 1rem 1.5rem; }
     .receipt-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #f3f4f6; gap: 12px; }
@@ -470,9 +473,11 @@
       <button class="close-btn" onclick="closeOrdersForm()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="form-section">Buyer & item</div>
-    <div class="form-row">
+    <div class="form-row single">
       <div class="form-group"><label>Buyer name *</label><input id="of-name" type="text" placeholder="e.g. Maria Santos"></div>
-      <div class="form-group"><label>Item / product *</label><input id="of-item" type="text" placeholder="e.g. Korean skincare set"></div>
+    </div>
+    <div class="form-row single">
+      <div class="form-group"><label>Order details * <span style="font-weight:400;color:var(--text3);">— one item per line, e.g. 🖤 MDZS Hoodie ×1  ₱850</span></label><textarea id="of-item" placeholder="🖤 MDZS Wei Wuxian Hoodie ×1  ₱850 (S)&#10;🤍 Lan Wangji Hoodie ×1  ₱850 (M)" style="min-height:90px;"></textarea></div>
     </div>
     <div class="form-section">Pricing</div>
     <div class="form-row">
@@ -512,9 +517,11 @@
       <button class="close-btn" onclick="closePasabuyForm()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="form-section">Buyer & item</div>
-    <div class="form-row">
+    <div class="form-row single">
       <div class="form-group"><label>Buyer name *</label><input id="pf-name" type="text" placeholder="e.g. Juan dela Cruz"></div>
-      <div class="form-group"><label>Item / product *</label><input id="pf-item" type="text" placeholder="e.g. Uniqlo sweater"></div>
+    </div>
+    <div class="form-row single">
+      <div class="form-group"><label>Order details * <span style="font-weight:400;color:var(--text3);">— one item per line</span></label><textarea id="pf-item" placeholder="🖤 Uniqlo sweater ×1  ₱1,200 (M)&#10;👟 Nike Air Force 1 ×1  ₱4,500 (US8)" style="min-height:90px;"></textarea></div>
     </div>
     <div class="form-section">Fees & pricing</div>
     <div class="form-row triple">
@@ -564,9 +571,11 @@
       <button class="close-btn" onclick="closeGroupForm()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="form-section">Member & item</div>
-    <div class="form-row">
+    <div class="form-row single">
       <div class="form-group"><label>Name *</label><input id="gf-name" type="text" placeholder="e.g. Ana Reyes"></div>
-      <div class="form-group"><label>Item / product *</label><input id="gf-item" type="text" placeholder="e.g. Nike shoes size 7"></div>
+    </div>
+    <div class="form-row single">
+      <div class="form-group"><label>Order details * <span style="font-weight:400;color:var(--text3);">— one item per line</span></label><textarea id="gf-item" placeholder="👟 Nike shoes ×1  ₱3,500 (Size 7)&#10;🧢 Cap ×2  ₱450" style="min-height:90px;"></textarea></div>
     </div>
     <div class="form-section">Fees & pricing</div>
     <div class="form-row triple">
@@ -860,6 +869,14 @@
     oSk===k?oSd*=-1:(oSk=k,oSd=1); renderOrders();
   }
 
+  // Helper: render item lines for table cell
+  function itemCell(item) {
+    const lines = (item||'').split('\n').map(l=>l.trim()).filter(l=>l);
+    if(!lines.length) return '—';
+    if(lines.length === 1) return esc(lines[0]);
+    return esc(lines[0]) + `<span style="color:var(--text3);font-size:11px;margin-left:5px;">+${lines.length-1} more</span>`;
+  }
+
   function renderOrders() {
     const q=document.getElementById('oq').value.toLowerCase();
     const fs=document.getElementById('ofst').value;
@@ -877,7 +894,7 @@
       tr.innerHTML=`
         <td class="td-num orders nowrap">${esc(r.orderNum)||'—'}</td>
         <td class="td-buyer nowrap">${esc(r.name)}</td>
-        <td class="td-item">${esc(r.item)}</td>
+        <td class="td-item">${itemCell(r.item)}</td>
         <td class="td-mono">₱${fmt(r.price)}</td>
         <td class="td-mono td-muted">₱${fmt(r.fee)}</td>
         <td class="td-muted nowrap">${fmtD(r.date)}</td>
@@ -889,7 +906,6 @@
           <button class="row-btn" onclick="openOrdersForm(${r.id})" title="Edit"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="row-btn danger" onclick="delOrder(${r.id})" title="Delete"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
         </div></td>`;
-      tbd.appendChild(tr);
     });
     const total=oRows.reduce((s,r)=>s+(r.price||0)+(r.fee||0),0);
     document.getElementById('o-total').textContent=oRows.length;
@@ -1102,7 +1118,11 @@
     currentReceiptName = r.name;
     document.getElementById('r-ordernum').textContent = r.orderNum || '';
     document.getElementById('r-name').textContent = r.name;
-    document.getElementById('r-item').textContent = r.item || '—';
+    // Render each line of item as its own row
+    const itemLines = (r.item || '—').split('\n').map(l => l.trim()).filter(l => l);
+    document.getElementById('r-item').innerHTML = itemLines.length
+      ? itemLines.map(l => `<div class="r-item-line">${esc(l)}</div>`).join('')
+      : '<div class="r-item-line">—</div>';
     document.getElementById('r-status-badge').innerHTML = statusBadge(r.status);
     const badge=document.getElementById('r-type-badge');
     if(type==='order'){badge.textContent='Order';badge.className='r-type orders';}
